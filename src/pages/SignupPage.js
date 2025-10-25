@@ -12,8 +12,60 @@ const SignupPage = () => {
     const [role, setRole] = useState("Staff");
     const [showPassword, setShowPassword] = useState(false);
     const [passwordError, setPasswordError] = useState("");
-    const { register, loading, error, clearError } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const { setUser, setToken } = useAuth();
     const navigate = useNavigate();
+
+    // API Base URL
+    const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8800/api';
+
+    // Get token from localStorage
+    const getAuthToken = () => {
+        return localStorage.getItem('token');
+    };
+
+    // API request helper
+    const apiRequest = async (endpoint, options = {}) => {
+        const token = getAuthToken();
+        const url = `${API_BASE_URL}${endpoint}`;
+        
+        const config = {
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token && { Authorization: `Bearer ${token}` }),
+            },
+            ...options,
+        };
+
+        try {
+            const response = await fetch(url, config);
+            
+            const contentType = response.headers.get('content-type');
+            let data;
+            
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                data = await response.text();
+            }
+            
+            if (!response.ok) {
+                const error = new Error(data.message || `HTTP ${response.status}`);
+                error.response = { status: response.status, data };
+                throw error;
+            }
+            
+            return data;
+        } catch (error) {
+            if (error.response?.data?.message) {
+                const apiError = new Error(error.response.data.message);
+                apiError.response = error.response;
+                throw apiError;
+            }
+            throw error;
+        }
+    };
 
     const handleMobileChange = (e) => {
         const value = e.target.value;
@@ -24,16 +76,19 @@ const SignupPage = () => {
 
     const handleSignup = async (e) => {
         e.preventDefault();
-        clearError();
+        setError(null);
         setPasswordError('');
+        setLoading(true);
 
         if (password !== confirmPassword) {
             setPasswordError("Passwords do not match!");
+            setLoading(false);
             return;
         }
 
         if (password.length < 6) {
             setPasswordError("Password must be at least 6 characters long!");
+            setLoading(false);
             return;
         }
 
@@ -47,10 +102,25 @@ const SignupPage = () => {
                 role: role
             };
 
-            await register(userData);
+            const response = await apiRequest('/auth/register', {
+                method: 'POST',
+                body: JSON.stringify(userData),
+            });
+            
+            // Store token and user info in localStorage
+            localStorage.setItem('token', response.data.token);
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+            
+            setToken(response.data.token);
+            setUser(response.data.user);
+            
             navigate("/dashboard");
         } catch (err) {
             console.error('Signup error:', err);
+            const errorMessage = err.response?.data?.message || err.message || 'Registration failed';
+            setError(errorMessage);
+        } finally {
+            setLoading(false);
         }
     };
 

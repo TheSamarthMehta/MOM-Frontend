@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Upload, Download, Eye, Trash2, File, FileText, Image as ImageIcon, Search } from "lucide-react";
-import { meetingDocumentAPI, meetingAPI, fileUploadAPI } from '../api';
 
 const DocumentsManagerPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -14,6 +13,56 @@ const DocumentsManagerPage = () => {
   const [uploadMeeting, setUploadMeeting] = useState("");
   const [dragActive, setDragActive] = useState(false);
 
+  // API Base URL
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8800/api';
+
+  // Get token from localStorage
+  const getAuthToken = () => {
+    return localStorage.getItem('token');
+  };
+
+  // API request helper
+  const apiRequest = async (endpoint, options = {}) => {
+    const token = getAuthToken();
+    const url = `${API_BASE_URL}${endpoint}`;
+    
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      ...options,
+    };
+
+    try {
+      const response = await fetch(url, config);
+      
+      const contentType = response.headers.get('content-type');
+      let data;
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        data = await response.text();
+      }
+      
+      if (!response.ok) {
+        const error = new Error(data.message || `HTTP ${response.status}`);
+        error.response = { status: response.status, data };
+        throw error;
+      }
+      
+      return data;
+    } catch (error) {
+      if (error.response?.data?.message) {
+        const apiError = new Error(error.response.data.message);
+        apiError.response = error.response;
+        throw apiError;
+      }
+      throw error;
+    }
+  };
+
   // Fetch meetings and documents on component mount
   useEffect(() => {
     const fetchData = async () => {
@@ -22,7 +71,7 @@ const DocumentsManagerPage = () => {
         setError(null);
         
         console.log('Fetching meetings...');
-        const meetingsResponse = await meetingAPI.getAllMeetings({ limit: 50 });
+        const meetingsResponse = await apiRequest('/meetings?limit=50');
         console.log('Meetings response:', meetingsResponse);
         const rawMeetings = meetingsResponse.data || [];
         setMeetings(rawMeetings);
@@ -48,7 +97,7 @@ const DocumentsManagerPage = () => {
             }
             
             console.log(`Fetching documents for meeting ${meetingId}...`);
-            const docsResponse = await meetingDocumentAPI.getMeetingDocuments(meetingId);
+            const docsResponse = await apiRequest(`/meetings/${meetingId}/documents`);
             console.log(`Documents response for meeting ${meetingId}:`, docsResponse);
             const meetingDocs = (docsResponse.data || []).map(doc => ({
               ...doc,
@@ -121,7 +170,9 @@ const DocumentsManagerPage = () => {
     if (window.confirm(`Are you sure you want to delete "${doc.documentName}"?`)) {
       try {
         setLoading(true);
-        await meetingDocumentAPI.deleteMeetingDocument(doc._id);
+        await apiRequest(`/meeting-documents/${doc._id}`, {
+          method: 'DELETE'
+        });
         setDocuments((prev) => prev.filter((d) => d._id !== doc._id));
       } catch (err) {
         console.error('Error deleting document:', err);
@@ -134,7 +185,18 @@ const DocumentsManagerPage = () => {
 
   const handleView = async (doc) => {
     try {
-      const blob = await fileUploadAPI.downloadFile(doc._id);
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/upload/document/${doc._id}`, {
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+
+      const blob = await response.blob();
       const fileURL = URL.createObjectURL(blob);
       window.open(fileURL, '_blank');
     } catch (err) {
@@ -145,7 +207,18 @@ const DocumentsManagerPage = () => {
 
   const handleDownload = async (doc) => {
     try {
-      const blob = await fileUploadAPI.downloadFile(doc._id);
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/upload/document/${doc._id}`, {
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+
+      const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -210,10 +283,28 @@ const DocumentsManagerPage = () => {
         fileSize: selectedFile.size
       };
       
-      const response = await meetingDocumentAPI.addMeetingDocument(uploadMeeting, documentData);
+      const response = await apiRequest(`/meetings/${uploadMeeting}/documents`, {
+        method: 'POST',
+        body: JSON.stringify(documentData)
+      });
       
       // Then upload the actual file
-      await fileUploadAPI.uploadFile(selectedFile, response.data._id);
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      
+      const token = getAuthToken();
+      const uploadResponse = await fetch(`${API_BASE_URL}/upload/document/${response.data._id}`, {
+        method: 'POST',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        const error = await uploadResponse.json();
+        throw new Error(error.message || 'Upload failed');
+      }
       
       // Add the document to the list
       const newDoc = {

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { FileText, TrendingUp, XCircle, Download, Calendar } from "lucide-react";
-import { dashboardAPI, meetingAPI, meetingMemberAPI, staffAPI } from '../api';
 
 const ReportsPage = () => {
   const [reportType, setReportType] = useState("summary");
@@ -13,6 +12,56 @@ const ReportsPage = () => {
   const [attendanceData, setAttendanceData] = useState([]);
   const [cancelledMeetings, setCancelledMeetings] = useState([]);
   const [dashboardStats, setDashboardStats] = useState(null);
+
+  // API Base URL
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8800/api';
+
+  // Get token from localStorage
+  const getAuthToken = () => {
+    return localStorage.getItem('token');
+  };
+
+  // API request helper
+  const apiRequest = async (endpoint, options = {}) => {
+    const token = getAuthToken();
+    const url = `${API_BASE_URL}${endpoint}`;
+    
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      ...options,
+    };
+
+    try {
+      const response = await fetch(url, config);
+      
+      const contentType = response.headers.get('content-type');
+      let data;
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        data = await response.text();
+      }
+      
+      if (!response.ok) {
+        const error = new Error(data.message || `HTTP ${response.status}`);
+        error.response = { status: response.status, data };
+        throw error;
+      }
+      
+      return data;
+    } catch (error) {
+      if (error.response?.data?.message) {
+        const apiError = new Error(error.response.data.message);
+        apiError.response = error.response;
+        throw apiError;
+      }
+      throw error;
+    }
+  };
 
   const reportCards = [
     { title: "Meeting Summary Report", icon: FileText, description: "Overview of all meetings with key metrics", type: "summary", color: "blue" },
@@ -27,7 +76,7 @@ const ReportsPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await dashboardAPI.getDashboardStats();
+        const response = await apiRequest('/dashboard/overview');
         setDashboardStats(response.data);
       } catch (err) {
         console.error('Error fetching dashboard stats:', err);
@@ -72,11 +121,7 @@ const ReportsPage = () => {
 
   const generateSummaryReport = async () => {
     try {
-      const response = await meetingAPI.getAllMeetings({ 
-        limit: 100,
-        startDate: dateRange.from,
-        endDate: dateRange.to
-      });
+      const response = await apiRequest(`/meetings?limit=100&startDate=${dateRange.from}&endDate=${dateRange.to}`);
       
       const meetings = response.data || [];
       const summary = meetings.map(meeting => ({
@@ -97,14 +142,10 @@ const ReportsPage = () => {
   const generateAttendanceReport = async () => {
     try {
       // Get all meetings in date range
-      const meetingsResponse = await meetingAPI.getAllMeetings({ 
-        limit: 100,
-        startDate: dateRange.from,
-        endDate: dateRange.to
-      });
+      const meetingsResponse = await apiRequest(`/meetings?limit=100&startDate=${dateRange.from}&endDate=${dateRange.to}`);
       
       const meetings = meetingsResponse.data || [];
-      const staffResponse = await staffAPI.getAllStaff();
+      const staffResponse = await apiRequest('/staff');
       const staff = staffResponse.data || [];
       
       // Calculate attendance for each staff member
@@ -115,7 +156,7 @@ const ReportsPage = () => {
           
           for (const meeting of meetings) {
             try {
-              const membersResponse = await meetingMemberAPI.getMeetingMembers(meeting._id);
+              const membersResponse = await apiRequest(`/meetings/${meeting._id}/members`);
               const members = membersResponse.data || [];
               const memberInMeeting = members.find(m => m.staffId?._id === member._id);
               
@@ -151,11 +192,7 @@ const ReportsPage = () => {
 
   const generateCancelledReport = async () => {
     try {
-      const response = await meetingAPI.getAllMeetings({ 
-        limit: 100,
-        startDate: dateRange.from,
-        endDate: dateRange.to
-      });
+      const response = await apiRequest(`/meetings?limit=100&startDate=${dateRange.from}&endDate=${dateRange.to}`);
       
       const meetings = response.data || [];
       const cancelled = meetings

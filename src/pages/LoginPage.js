@@ -7,18 +7,86 @@ const LoginPage = () => {
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('Admin');
     const [showPassword, setShowPassword] = useState(false);
-    const { login, loading, error, clearError } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const { setUser, setToken } = useAuth();
     const navigate = useNavigate();
+
+    // API Base URL
+    const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8800/api';
+
+    // Get token from localStorage
+    const getAuthToken = () => {
+        return localStorage.getItem('token');
+    };
+
+    // API request helper
+    const apiRequest = async (endpoint, options = {}) => {
+        const token = getAuthToken();
+        const url = `${API_BASE_URL}${endpoint}`;
+        
+        const config = {
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token && { Authorization: `Bearer ${token}` }),
+            },
+            ...options,
+        };
+
+        try {
+            const response = await fetch(url, config);
+            
+            const contentType = response.headers.get('content-type');
+            let data;
+            
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                data = await response.text();
+            }
+            
+            if (!response.ok) {
+                const error = new Error(data.message || `HTTP ${response.status}`);
+                error.response = { status: response.status, data };
+                throw error;
+            }
+            
+            return data;
+        } catch (error) {
+            if (error.response?.data?.message) {
+                const apiError = new Error(error.response.data.message);
+                apiError.response = error.response;
+                throw apiError;
+            }
+            throw error;
+        }
+    };
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        clearError();
+        setError(null);
+        setLoading(true);
 
         try {
-            await login({ email, password, role });
+            const response = await apiRequest('/auth/login', {
+                method: 'POST',
+                body: JSON.stringify({ email, password, role }),
+            });
+            
+            // Store token and user info in localStorage
+            localStorage.setItem('token', response.data.token);
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+            
+            setToken(response.data.token);
+            setUser(response.data.user);
+            
             navigate("/dashboard");
         } catch (err) {
             console.error('Login error:', err);
+            const errorMessage = err.response?.data?.message || err.message || 'Login failed';
+            setError(errorMessage);
+        } finally {
+            setLoading(false);
         }
     };
 

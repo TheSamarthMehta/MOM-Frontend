@@ -186,6 +186,8 @@ export const AuthProvider = ({ children }) => {
     hasRole,
     hasAnyRole,
     clearError,
+    setUser,
+    setToken,
   };
 
   return (
