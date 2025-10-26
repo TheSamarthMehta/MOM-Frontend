@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Info, Edit, Trash2 } from "lucide-react";
-import { API_BASE_URL } from '../utils/const';
+import { api } from '../utils/api';
 
 const initialRows = [
   {
@@ -105,52 +105,6 @@ const MasterConfigPage = () => {
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
 
-  // Get token from localStorage
-  const getAuthToken = () => {
-    return localStorage.getItem('token');
-  };
-
-  // API request helper
-  const apiRequest = async (endpoint, options = {}) => {
-    const token = getAuthToken();
-    const url = `${API_BASE_URL}${endpoint}`;
-    
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      ...options,
-    };
-
-    try {
-      const response = await fetch(url, config);
-      
-      const contentType = response.headers.get('content-type');
-      let data;
-      
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        data = await response.text();
-      }
-      
-      if (!response.ok) {
-        const error = new Error(data.message || `HTTP ${response.status}`);
-        error.response = { status: response.status, data };
-        throw error;
-      }
-      
-      return data;
-    } catch (error) {
-      if (error.response?.data?.message) {
-        const apiError = new Error(error.response.data.message);
-        apiError.response = error.response;
-        throw apiError;
-      }
-      throw error;
-    }
-  };
 
   // Fetch meeting types on component mount
   useEffect(() => {
@@ -158,7 +112,7 @@ const MasterConfigPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await apiRequest('/meeting-types');
+        const response = await api.get('/meeting-types');
         console.log('Meeting types response:', response);
         console.log('Meeting types data:', response.data);
         
@@ -249,9 +203,7 @@ const MasterConfigPage = () => {
     if (window.confirm(`Are you sure you want to delete "${row.meetingTypeName}"?`)) {
       try {
         setLoading(true);
-        await apiRequest(`/meeting-types/${row._id}`, {
-          method: 'DELETE'
-        });
+        await api.delete(`/meeting-types/${row._id}`);
         setRows((prev) => prev.filter((r) => r._id !== row._id));
       } catch (err) {
         console.error('Error deleting meeting type:', err);
@@ -277,10 +229,7 @@ const MasterConfigPage = () => {
       setLoading(true);
       
       if (editRow) {
-        const response = await apiRequest(`/meeting-types/${editRow._id}`, {
-          method: 'PUT',
-          body: JSON.stringify(form)
-        });
+        const response = await api.put(`/meeting-types/${editRow._id}`, form);
         // Ensure timestamps are properly handled
         const updatedItem = {
           ...response.data,
@@ -293,10 +242,7 @@ const MasterConfigPage = () => {
           )
         );
       } else {
-        const response = await apiRequest('/meeting-types', {
-          method: 'POST',
-          body: JSON.stringify(form)
-        });
+        const response = await api.post('/meeting-types', form);
         // Ensure timestamps are properly handled for new items
         const newItem = {
           ...response.data,

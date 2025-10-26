@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { API_BASE_URL } from '../utils/const';
+import { api } from '../utils/api';
 
 const MeetingManagerPage = () => {
   const [meetings, setMeetings] = useState([]);
@@ -19,52 +19,6 @@ const MeetingManagerPage = () => {
   });
 
 
-  // Get token from localStorage
-  const getAuthToken = () => {
-    return localStorage.getItem('token');
-  };
-
-  // API request helper
-  const apiRequest = async (endpoint, options = {}) => {
-    const token = getAuthToken();
-    const url = `${API_BASE_URL}${endpoint}`;
-    
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      ...options,
-    };
-
-    try {
-      const response = await fetch(url, config);
-      
-      const contentType = response.headers.get('content-type');
-      let data;
-      
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        data = await response.text();
-      }
-      
-      if (!response.ok) {
-        const error = new Error(data.message || `HTTP ${response.status}`);
-        error.response = { status: response.status, data };
-        throw error;
-      }
-      
-      return data;
-    } catch (error) {
-      if (error.response?.data?.message) {
-        const apiError = new Error(error.response.data.message);
-        apiError.response = error.response;
-        throw apiError;
-      }
-      throw error;
-    }
-  };
 
   useEffect(() => {
     fetchData();
@@ -74,8 +28,8 @@ const MeetingManagerPage = () => {
     try {
       setLoading(true);
       const [meetingsResponse, typesResponse] = await Promise.all([
-        apiRequest('/meetings?limit=50'),
-        apiRequest('/meeting-types')
+        api.get('/meetings?limit=50'),
+        api.get('/meeting-types')
       ]);
       
       // Transform backend data to frontend format
@@ -134,12 +88,9 @@ const MeetingManagerPage = () => {
             } else if (form.type) {
               // Create a new meeting type on the fly
               try {
-                const created = await apiRequest('/meeting-types', {
-                  method: 'POST',
-                  body: JSON.stringify({ 
-                    meetingTypeName: form.type, 
-                    remarks: '' 
-                  })
+                const created = await api.post('/meeting-types', { 
+                  meetingTypeName: form.type, 
+                  remarks: '' 
                 });
                 const newType = created.data || created;
                 meetingTypeId = newType._id || newType.id;
@@ -174,15 +125,9 @@ const MeetingManagerPage = () => {
       console.log('Submitting payload:', payload);
 
       if (editingMeeting) {
-        await apiRequest(`/meetings/${editingMeeting.id}`, {
-          method: 'PUT',
-          body: JSON.stringify(payload)
-        });
+        await api.put(`/meetings/${editingMeeting.id}`, payload);
       } else {
-        await apiRequest('/meetings', {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
+        await api.post('/meetings', payload);
       }
       fetchData();
       closeModal();
@@ -195,9 +140,7 @@ const MeetingManagerPage = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this meeting?')) {
       try {
-        await apiRequest(`/meetings/${id}`, {
-          method: 'DELETE'
-        });
+        await api.delete(`/meetings/${id}`);
         fetchData();
       } catch (err) {
         alert('Failed to delete meeting');

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { API_BASE_URL } from '../utils/const';
+import { api } from '../utils/api';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -14,52 +14,6 @@ const LoginPage = () => {
     const navigate = useNavigate();
 
 
-    // Get token from localStorage
-    const getAuthToken = () => {
-        return localStorage.getItem('token');
-    };
-
-    // API request helper
-    const apiRequest = async (endpoint, options = {}) => {
-        const token = getAuthToken();
-        const url = `${API_BASE_URL}${endpoint}`;
-        
-        const config = {
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token && { Authorization: `Bearer ${token}` }),
-            },
-            ...options,
-        };
-
-        try {
-            const response = await fetch(url, config);
-            
-            const contentType = response.headers.get('content-type');
-            let data;
-            
-            if (contentType && contentType.includes('application/json')) {
-                data = await response.json();
-            } else {
-                data = await response.text();
-            }
-            
-            if (!response.ok) {
-                const error = new Error(data.message || `HTTP ${response.status}`);
-                error.response = { status: response.status, data };
-                throw error;
-            }
-            
-            return data;
-        } catch (error) {
-            if (error.response?.data?.message) {
-                const apiError = new Error(error.response.data.message);
-                apiError.response = error.response;
-                throw apiError;
-            }
-            throw error;
-        }
-    };
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -67,10 +21,7 @@ const LoginPage = () => {
         setLoading(true);
 
         try {
-            const response = await apiRequest('/auth/login', {
-                method: 'POST',
-                body: JSON.stringify({ email, password, role }),
-            });
+            const response = await api.post('/auth/login', { email, password, role });
             
             // Store token and user info in localStorage
             localStorage.setItem('token', response.data.token);
@@ -82,8 +33,7 @@ const LoginPage = () => {
             navigate("/dashboard");
         } catch (err) {
             console.error('Login error:', err);
-            const errorMessage = err.response?.data?.message || err.message || 'Login failed';
-            setError(errorMessage);
+            setError(err.message || 'Login failed');
         } finally {
             setLoading(false);
         }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Upload, Download, Eye, Trash2, File, FileText, Image as ImageIcon, Search } from "lucide-react";
-import { API_BASE_URL } from '../utils/const';
+import { api } from '../utils/api';
 
 const DocumentsManagerPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -15,52 +15,6 @@ const DocumentsManagerPage = () => {
   const [dragActive, setDragActive] = useState(false);
 
 
-  // Get token from localStorage
-  const getAuthToken = () => {
-    return localStorage.getItem('token');
-  };
-
-  // API request helper
-  const apiRequest = async (endpoint, options = {}) => {
-    const token = getAuthToken();
-    const url = `${API_BASE_URL}${endpoint}`;
-    
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      ...options,
-    };
-
-    try {
-      const response = await fetch(url, config);
-      
-      const contentType = response.headers.get('content-type');
-      let data;
-      
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        data = await response.text();
-      }
-      
-      if (!response.ok) {
-        const error = new Error(data.message || `HTTP ${response.status}`);
-        error.response = { status: response.status, data };
-        throw error;
-      }
-      
-      return data;
-    } catch (error) {
-      if (error.response?.data?.message) {
-        const apiError = new Error(error.response.data.message);
-        apiError.response = error.response;
-        throw apiError;
-      }
-      throw error;
-    }
-  };
 
   // Fetch meetings and documents on component mount
   useEffect(() => {
@@ -70,7 +24,7 @@ const DocumentsManagerPage = () => {
         setError(null);
         
         console.log('Fetching meetings...');
-        const meetingsResponse = await apiRequest('/meetings?limit=50');
+        const meetingsResponse = await api.get('/meetings?limit=50');
         console.log('Meetings response:', meetingsResponse);
         const rawMeetings = meetingsResponse.data || [];
         setMeetings(rawMeetings);
@@ -96,7 +50,7 @@ const DocumentsManagerPage = () => {
             }
             
             console.log(`Fetching documents for meeting ${meetingId}...`);
-            const docsResponse = await apiRequest(`/meetings/${meetingId}/documents`);
+            const docsResponse = await api.get(`/meetings/${meetingId}/documents`);
             console.log(`Documents response for meeting ${meetingId}:`, docsResponse);
             const meetingDocs = (docsResponse.data || []).map(doc => ({
               ...doc,
@@ -169,9 +123,7 @@ const DocumentsManagerPage = () => {
     if (window.confirm(`Are you sure you want to delete "${doc.documentName}"?`)) {
       try {
         setLoading(true);
-        await apiRequest(`/meeting-documents/${doc._id}`, {
-          method: 'DELETE'
-        });
+        await api.delete(`/meeting-documents/${doc._id}`);
         setDocuments((prev) => prev.filter((d) => d._id !== doc._id));
       } catch (err) {
         console.error('Error deleting document:', err);
@@ -184,8 +136,8 @@ const DocumentsManagerPage = () => {
 
   const handleView = async (doc) => {
     try {
-      const token = getAuthToken();
-      const response = await fetch(`${API_BASE_URL}/upload/document/${doc._id}`, {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8800/api'}/upload/document/${doc._id}`, {
         headers: {
           ...(token && { Authorization: `Bearer ${token}` }),
         },
@@ -206,8 +158,8 @@ const DocumentsManagerPage = () => {
 
   const handleDownload = async (doc) => {
     try {
-      const token = getAuthToken();
-      const response = await fetch(`${API_BASE_URL}/upload/document/${doc._id}`, {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8800/api'}/upload/document/${doc._id}`, {
         headers: {
           ...(token && { Authorization: `Bearer ${token}` }),
         },
@@ -282,17 +234,14 @@ const DocumentsManagerPage = () => {
         fileSize: selectedFile.size
       };
       
-      const response = await apiRequest(`/meetings/${uploadMeeting}/documents`, {
-        method: 'POST',
-        body: JSON.stringify(documentData)
-      });
+      const response = await api.post(`/meetings/${uploadMeeting}/documents`, documentData);
       
       // Then upload the actual file
       const formData = new FormData();
       formData.append('file', selectedFile);
       
-      const token = getAuthToken();
-      const uploadResponse = await fetch(`${API_BASE_URL}/upload/document/${response.data._id}`, {
+      const token = localStorage.getItem('token');
+      const uploadResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8800/api'}/upload/document/${response.data._id}`, {
         method: 'POST',
         headers: {
           ...(token && { Authorization: `Bearer ${token}` }),

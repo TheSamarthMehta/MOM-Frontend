@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from "react";
-import { API_BASE_URL } from '../utils/const';
+import { api } from '../utils/api';
 
 const StaffConfigPage = () => {
   const [staff, setStaff] = useState([]);
@@ -16,52 +16,6 @@ const StaffConfigPage = () => {
   });
 
 
-  // Get token from localStorage
-  const getAuthToken = () => {
-    return localStorage.getItem('token');
-  };
-
-  // API request helper
-  const apiRequest = async (endpoint, options = {}) => {
-    const token = getAuthToken();
-    const url = `${API_BASE_URL}${endpoint}`;
-    
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      ...options,
-    };
-
-    try {
-      const response = await fetch(url, config);
-      
-      const contentType = response.headers.get('content-type');
-      let data;
-      
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        data = await response.text();
-      }
-      
-      if (!response.ok) {
-        const error = new Error(data.message || `HTTP ${response.status}`);
-        error.response = { status: response.status, data };
-        throw error;
-      }
-      
-      return data;
-    } catch (error) {
-      if (error.response?.data?.message) {
-        const apiError = new Error(error.response.data.message);
-        apiError.response = error.response;
-        throw apiError;
-      }
-      throw error;
-    }
-  };
 
   useEffect(() => {
     fetchStaff();
@@ -70,7 +24,7 @@ const StaffConfigPage = () => {
   const fetchStaff = async () => {
     try {
       setLoading(true);
-      const response = await apiRequest('/staff');
+      const response = await api.get('/staff');
       setStaff(response.data || []);
       setError(null);
     } catch (err) {
@@ -85,15 +39,9 @@ const StaffConfigPage = () => {
     e.preventDefault();
     try {
       if (editingStaff) {
-        await apiRequest(`/staff/${editingStaff.id}`, {
-          method: 'PUT',
-          body: JSON.stringify(form)
-        });
+        await api.put(`/staff/${editingStaff.id}`, form);
       } else {
-        await apiRequest('/staff', {
-          method: 'POST',
-          body: JSON.stringify(form)
-        });
+        await api.post('/staff', form);
       }
       fetchStaff();
       closeModal();
@@ -105,9 +53,7 @@ const StaffConfigPage = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this staff member?')) {
       try {
-        await apiRequest(`/staff/${id}`, {
-          method: 'DELETE'
-        });
+        await api.delete(`/staff/${id}`);
         fetchStaff();
       } catch (err) {
         alert('Failed to delete staff');

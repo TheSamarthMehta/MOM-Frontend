@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { UserCheck, UserX, Users } from "lucide-react";
-import { API_BASE_URL } from '../utils/const';
+import { api } from '../utils/api';
 
 const AttendancePage = () => {
   const [selectedMeeting, setSelectedMeeting] = useState(null);
@@ -14,52 +14,6 @@ const AttendancePage = () => {
   const [newMember, setNewMember] = useState({ staffId: "", role: "Staff" });
 
 
-  // Get token from localStorage
-  const getAuthToken = () => {
-    return localStorage.getItem('token');
-  };
-
-  // API request helper
-  const apiRequest = async (endpoint, options = {}) => {
-    const token = getAuthToken();
-    const url = `${API_BASE_URL}${endpoint}`;
-    
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      ...options,
-    };
-
-    try {
-      const response = await fetch(url, config);
-      
-      const contentType = response.headers.get('content-type');
-      let data;
-      
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        data = await response.text();
-      }
-      
-      if (!response.ok) {
-        const error = new Error(data.message || `HTTP ${response.status}`);
-        error.response = { status: response.status, data };
-        throw error;
-      }
-      
-      return data;
-    } catch (error) {
-      if (error.response?.data?.message) {
-        const apiError = new Error(error.response.data.message);
-        apiError.response = error.response;
-        throw apiError;
-      }
-      throw error;
-    }
-  };
   
   // Fetch meetings and staff on component mount
   useEffect(() => {
@@ -69,8 +23,8 @@ const AttendancePage = () => {
         setError(null);
         
         const [meetingsResponse, staffResponse] = await Promise.all([
-          apiRequest('/meetings?limit=50'),
-          apiRequest('/staff')
+          api.get('/meetings?limit=50'),
+          api.get('/staff')
         ]);
         
         setMeetings(meetingsResponse.data || []);
@@ -92,7 +46,7 @@ const AttendancePage = () => {
       const fetchParticipants = async () => {
         try {
           setLoading(true);
-          const response = await apiRequest(`/meetings/${selectedMeeting._id}/members`);
+          const response = await api.get(`/meetings/${selectedMeeting._id}/members`);
           setParticipants(response.data || []);
         } catch (err) {
           console.error('Error fetching participants:', err);
@@ -112,10 +66,7 @@ const AttendancePage = () => {
       if (!participant) return;
 
       const newStatus = !participant.isPresent;
-      await apiRequest(`/meeting-members/${participantId}/attendance`, {
-        method: 'PUT',
-        body: JSON.stringify({ isPresent: newStatus })
-      });
+      await api.put(`/meeting-members/${participantId}/attendance`, { isPresent: newStatus });
       
       setParticipants((prev) =>
         prev.map((p) =>
@@ -139,10 +90,7 @@ const AttendancePage = () => {
 
     try {
       setLoading(true);
-      const response = await apiRequest(`/meetings/${selectedMeeting._id}/members`, {
-        method: 'POST',
-        body: JSON.stringify(newMember)
-      });
+      const response = await api.post(`/meetings/${selectedMeeting._id}/members`, newMember);
       setParticipants((prev) => [response.data, ...prev]);
       setNewMember({ staffId: "", role: "Staff" });
       setShowAddModal(false);
@@ -158,9 +106,7 @@ const AttendancePage = () => {
     if (window.confirm("Are you sure you want to remove this member?")) {
       try {
         setLoading(true);
-        await apiRequest(`/meeting-members/${participantId}`, {
-          method: 'DELETE'
-        });
+        await api.delete(`/meeting-members/${participantId}`);
         setParticipants((prev) => prev.filter((p) => p._id !== participantId));
       } catch (err) {
         console.error('Error removing member:', err);

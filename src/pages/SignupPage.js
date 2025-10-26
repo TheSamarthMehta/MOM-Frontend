@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from '../contexts/AuthContext';
-import { API_BASE_URL } from '../utils/const';
+import { api } from '../utils/api';
 
 const SignupPage = () => {
     const [firstName, setFirstName] = useState("");
@@ -19,52 +19,6 @@ const SignupPage = () => {
     const navigate = useNavigate();
 
 
-    // Get token from localStorage
-    const getAuthToken = () => {
-        return localStorage.getItem('token');
-    };
-
-    // API request helper
-    const apiRequest = async (endpoint, options = {}) => {
-        const token = getAuthToken();
-        const url = `${API_BASE_URL}${endpoint}`;
-        
-        const config = {
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token && { Authorization: `Bearer ${token}` }),
-            },
-            ...options,
-        };
-
-        try {
-            const response = await fetch(url, config);
-            
-            const contentType = response.headers.get('content-type');
-            let data;
-            
-            if (contentType && contentType.includes('application/json')) {
-                data = await response.json();
-            } else {
-                data = await response.text();
-            }
-            
-            if (!response.ok) {
-                const error = new Error(data.message || `HTTP ${response.status}`);
-                error.response = { status: response.status, data };
-                throw error;
-            }
-            
-            return data;
-        } catch (error) {
-            if (error.response?.data?.message) {
-                const apiError = new Error(error.response.data.message);
-                apiError.response = error.response;
-                throw apiError;
-            }
-            throw error;
-        }
-    };
 
     const handleMobileChange = (e) => {
         const value = e.target.value;
@@ -101,10 +55,7 @@ const SignupPage = () => {
                 role: role
             };
 
-            const response = await apiRequest('/auth/register', {
-                method: 'POST',
-                body: JSON.stringify(userData),
-            });
+            const response = await api.post('/auth/register', userData);
             
             // Store token and user info in localStorage
             localStorage.setItem('token', response.data.token);

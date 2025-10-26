@@ -19,11 +19,10 @@ const App = () => {
       <Router>
         <Routes>
           <Route path="/" element={<Navigate to="/login" />} />
-          {/* Public */}
+
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
-          {/* Protected Routes */}
           <Route element={<MainLayout />}>
             <Route path="/dashboard" element={
               <ProtectedRoute>
