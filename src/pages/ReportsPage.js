@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FileText, TrendingUp, XCircle, Download, Calendar } from "lucide-react";
+import { API_BASE_URL } from '../utils/const';
 
 const ReportsPage = () => {
   const [reportType, setReportType] = useState("summary");
@@ -13,8 +14,6 @@ const ReportsPage = () => {
   const [cancelledMeetings, setCancelledMeetings] = useState([]);
   const [dashboardStats, setDashboardStats] = useState(null);
 
-  // API Base URL
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8800/api';
 
   // Get token from localStorage
   const getAuthToken = () => {

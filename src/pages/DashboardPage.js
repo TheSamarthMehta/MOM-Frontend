@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../utils/const';
 
 const DashboardPage = () => {
     const [meetings, setMeetings] = useState([]);
@@ -11,8 +12,6 @@ const DashboardPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // API Base URL
-    const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8800/api';
 
     // Get token from localStorage
     const getAuthToken = () => {

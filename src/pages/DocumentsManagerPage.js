@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Upload, Download, Eye, Trash2, File, FileText, Image as ImageIcon, Search } from "lucide-react";
+import { API_BASE_URL } from '../utils/const';
 
 const DocumentsManagerPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -13,8 +14,6 @@ const DocumentsManagerPage = () => {
   const [uploadMeeting, setUploadMeeting] = useState("");
   const [dragActive, setDragActive] = useState(false);
 
-  // API Base URL
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8800/api';
 
   // Get token from localStorage
   const getAuthToken = () => {

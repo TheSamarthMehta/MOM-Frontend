@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from '../contexts/AuthContext';
+import { API_BASE_URL } from '../utils/const';
 
 const SignupPage = () => {
     const [firstName, setFirstName] = useState("");
@@ -17,8 +18,6 @@ const SignupPage = () => {
     const { setUser, setToken } = useAuth();
     const navigate = useNavigate();
 
-    // API Base URL
-    const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8800/api';
 
     // Get token from localStorage
     const getAuthToken = () => {

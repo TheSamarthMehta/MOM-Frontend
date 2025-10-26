@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { UserCheck, UserX, Users } from "lucide-react";
+import { API_BASE_URL } from '../utils/const';
 
 const AttendancePage = () => {
   const [selectedMeeting, setSelectedMeeting] = useState(null);
@@ -12,8 +13,6 @@ const AttendancePage = () => {
   const [error, setError] = useState(null);
   const [newMember, setNewMember] = useState({ staffId: "", role: "Staff" });
 
-  // API Base URL
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8800/api';
 
   // Get token from localStorage
   const getAuthToken = () => {

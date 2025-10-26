@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Info, Edit, Trash2 } from "lucide-react";
+import { API_BASE_URL } from '../utils/const';
 
 const initialRows = [
   {
@@ -103,8 +104,6 @@ const MasterConfigPage = () => {
   const [formError, setFormError] = useState("");
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
-  // API Base URL
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8800/api';
 
   // Get token from localStorage
   const getAuthToken = () => {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_BASE_URL } from '../utils/const';
 
 const MeetingManagerPage = () => {
   const [meetings, setMeetings] = useState([]);
@@ -17,8 +18,6 @@ const MeetingManagerPage = () => {
     agenda: "",
   });
 
-  // API Base URL
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8800/api';
 
   // Get token from localStorage
   const getAuthToken = () => {

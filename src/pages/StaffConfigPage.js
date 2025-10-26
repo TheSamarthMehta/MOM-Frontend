@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect } from "react";
+import { API_BASE_URL } from '../utils/const';
 
 const StaffConfigPage = () => {
   const [staff, setStaff] = useState([]);
@@ -14,8 +15,6 @@ const StaffConfigPage = () => {
     department: "",
   });
 
-  // API Base URL
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8800/api';
 
   // Get token from localStorage
   const getAuthToken = () => {
