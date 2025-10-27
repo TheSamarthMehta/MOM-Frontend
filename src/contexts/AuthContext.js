@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI } from '../api';
+import { authAPI } from '../utils/api';
 
 const AuthContext = createContext();
 
@@ -17,7 +17,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Initialize auth state from localStorage
   useEffect(() => {
     const initializeAuth = () => {
       try {
@@ -30,7 +29,6 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (err) {
         console.error('Error initializing auth:', err);
-        // Clear invalid data
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       } finally {
@@ -41,7 +39,6 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, []);
 
-  // Login function - handles user authentication
   const login = async (credentials) => {
     try {
       setLoading(true);
@@ -49,7 +46,6 @@ export const AuthProvider = ({ children }) => {
 
       const response = await authAPI.login(credentials);
       
-      // Store token and user info in localStorage for persistence
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       
@@ -59,7 +55,6 @@ export const AuthProvider = ({ children }) => {
       return response.data;
     } catch (err) {
       console.error('Login error:', err);
-      // Extract specific error message from backend response
       const errorMessage = err.response?.data?.message || err.message || 'Login failed';
       setError(errorMessage);
       throw new Error(errorMessage);
@@ -68,7 +63,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Register function - creates new user account
   const register = async (userData) => {
     try {
       setLoading(true);
@@ -78,7 +72,6 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.register(userData);
       console.log('Registration response:', response);
       
-      // Store token and user info after successful registration
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       
@@ -97,14 +90,11 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout function
   const logout = () => {
     try {
-      // Clear localStorage
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       
-      // Clear state
       setToken(null);
       setUser(null);
       setError(null);
@@ -113,7 +103,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Update user profile
   const updateProfile = async (profileData) => {
     try {
       setLoading(true);
@@ -121,7 +110,6 @@ export const AuthProvider = ({ children }) => {
 
       const response = await authAPI.updateProfile(profileData);
       
-      // Update stored user data
       localStorage.setItem('user', JSON.stringify(response.data));
       setUser(response.data);
       
@@ -135,7 +123,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Change password
   const changePassword = async (passwordData) => {
     try {
       setLoading(true);
@@ -152,22 +139,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Check if user is authenticated
   const isAuthenticated = () => {
     return !!(token && user);
   };
 
-  // Check if user has specific role
   const hasRole = (role) => {
     return user?.role === role;
   };
 
-  // Check if user has any of the specified roles
   const hasAnyRole = (roles) => {
     return roles.includes(user?.role);
   };
 
-  // Clear error
   const clearError = () => {
     setError(null);
   };

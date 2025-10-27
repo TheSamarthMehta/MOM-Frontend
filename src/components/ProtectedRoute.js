@@ -6,7 +6,6 @@ const ProtectedRoute = ({ children, requiredRoles = null }) => {
   const { isAuthenticated, hasAnyRole, loading } = useAuth();
   const location = useLocation();
 
-  // Show loading spinner while checking authentication
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -18,12 +17,10 @@ const ProtectedRoute = ({ children, requiredRoles = null }) => {
     );
   }
 
-  // Redirect to login if not authenticated
   if (!isAuthenticated()) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Check role-based access if required roles are specified
   if (requiredRoles && !hasAnyRole(requiredRoles)) {
     return (
       <div className="flex items-center justify-center min-h-screen">

@@ -8,7 +8,6 @@ const ReportsPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
-  // Data states
   const [summaryData, setSummaryData] = useState([]);
   const [attendanceData, setAttendanceData] = useState([]);
   const [cancelledMeetings, setCancelledMeetings] = useState([]);
@@ -23,7 +22,6 @@ const ReportsPage = () => {
     { title: "Export Reports", icon: Download, description: "Export data to Excel or PDF", type: "export", color: "purple" },
   ];
 
-  // Fetch dashboard statistics
   useEffect(() => {
     const fetchDashboardStats = async () => {
       try {
@@ -42,7 +40,6 @@ const ReportsPage = () => {
     fetchDashboardStats();
   }, []);
 
-  // Generate reports based on selected type and date range
   const generateReport = async () => {
     try {
       setLoading(true);
@@ -94,14 +91,12 @@ const ReportsPage = () => {
 
   const generateAttendanceReport = async () => {
     try {
-      // Get all meetings in date range
       const meetingsResponse = await api.get(`/meetings?limit=100&startDate=${dateRange.from}&endDate=${dateRange.to}`);
       
       const meetings = meetingsResponse.data || [];
       const staffResponse = await api.get('/staff');
       const staff = staffResponse.data || [];
       
-      // Calculate attendance for each staff member
       const attendanceStats = await Promise.all(
         staff.map(async (member) => {
           let totalMeetings = 0;
@@ -166,8 +161,6 @@ const ReportsPage = () => {
 
   const handleExport = async () => {
     try {
-      // For now, we'll just show an alert. In a real application, 
-      // you would call the backend export endpoint
       alert('Export functionality would be implemented with backend export APIs.\nThis would generate and download Excel/PDF files.');
     } catch (err) {
       console.error('Error exporting data:', err);

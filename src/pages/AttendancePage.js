@@ -15,7 +15,6 @@ const AttendancePage = () => {
 
 
   
-  // Fetch meetings and staff on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -40,7 +39,6 @@ const AttendancePage = () => {
     fetchData();
   }, []);
 
-  // Fetch participants when a meeting is selected
   useEffect(() => {
     if (selectedMeeting) {
       const fetchParticipants = async () => {

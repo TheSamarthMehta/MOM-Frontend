@@ -1,12 +1,9 @@
-// Simple API helper functions
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8800/api';
 
-// Get token from localStorage
 const getToken = () => {
     return localStorage.getItem('token');
 };
 
-// Simple fetch function
 const fetchData = async (endpoint, method = 'GET', body = null) => {
     const url = `${API_URL}${endpoint}`;
     const token = getToken();
@@ -38,10 +35,19 @@ const fetchData = async (endpoint, method = 'GET', body = null) => {
     return data;
 };
 
-// Export simple functions
 export const api = {
     get: (endpoint) => fetchData(endpoint, 'GET'),
     post: (endpoint, body) => fetchData(endpoint, 'POST', body),
     put: (endpoint, body) => fetchData(endpoint, 'PUT', body),
     delete: (endpoint) => fetchData(endpoint, 'DELETE')
+};
+
+export const authAPI = {
+    login: (credentials) => api.post('/auth/login', credentials),
+    register: (userData) => api.post('/auth/register', userData),
+    updateProfile: (profileData) => api.put('/auth/profile', profileData),
+    changePassword: (passwordData) => api.put('/auth/change-password', passwordData),
+    logout: () => api.post('/auth/logout'),
+    refreshToken: () => api.post('/auth/refresh'),
+    verifyToken: () => api.get('/auth/verify')
 };

@@ -4,10 +4,10 @@ import { api } from '../utils/api';
 const DashboardPage = () => {
     const [meetings, setMeetings] = useState([]);
     const [stats, setStats] = useState({
-        upcoming: 0,
-        completed: 0,
-        cancelled: 0,
-        pending: 0
+        upcoming: 1,
+        completed: 1,
+        cancelled: 1,
+        pending: 1
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -28,7 +28,6 @@ const DashboardPage = () => {
             
             setStats(dashboardResponse.data?.overview || stats);
             
-            // Transform backend data to frontend format
             const transformedMeetings = (meetingsResponse.data || []).map(meeting => {
                 const meetingDate = meeting.meetingDate ? new Date(meeting.meetingDate) : null;
                 const meetingTime = meeting.meetingTime ? new Date(meeting.meetingTime) : null;

@@ -16,7 +16,6 @@ const DocumentsManagerPage = () => {
 
 
 
-  // Fetch meetings and documents on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -29,7 +28,6 @@ const DocumentsManagerPage = () => {
         const rawMeetings = meetingsResponse.data || [];
         setMeetings(rawMeetings);
         
-        // Skip document fetching if no meetings exist
         if (rawMeetings.length === 0) {
           console.log('No meetings found, skipping document fetch');
           setDocuments([]);
@@ -37,12 +35,9 @@ const DocumentsManagerPage = () => {
           return;
         }
         
-        // For now, we'll fetch documents for all meetings
-        // In a real app, you might want to show documents for a specific meeting
         const allDocuments = [];
         for (const meeting of rawMeetings) {
           try {
-            // Use the actual MongoDB _id from the backend
             const meetingId = meeting._id || meeting.id;
             if (!meetingId) {
               console.warn('Meeting has no ID:', meeting);
@@ -65,7 +60,6 @@ const DocumentsManagerPage = () => {
               response: err.response,
               status: err.response?.status
             });
-            // Continue to next meeting instead of failing completely
           }
         }
         console.log('Total documents loaded:', allDocuments.length);
@@ -226,7 +220,6 @@ const DocumentsManagerPage = () => {
     try {
       setLoading(true);
       
-      // First create the document record
       const documentData = {
         documentName: selectedFile.name,
         documentType: getFileType(selectedFile.name),
@@ -236,7 +229,6 @@ const DocumentsManagerPage = () => {
       
       const response = await api.post(`/meetings/${uploadMeeting}/documents`, documentData);
       
-      // Then upload the actual file
       const formData = new FormData();
       formData.append('file', selectedFile);
       
@@ -254,7 +246,6 @@ const DocumentsManagerPage = () => {
         throw new Error(error.message || 'Upload failed');
       }
       
-      // Add the document to the list
       const newDoc = {
         ...response.data,
         meetingTitle: meetings.find(m => m._id === uploadMeeting)?.meetingTitle || 'Unknown Meeting',

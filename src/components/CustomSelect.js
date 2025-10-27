@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 
-// Custom hook to detect clicks outside of a component
 const useOutsideAlerter = (ref, callback) => {
     useEffect(() => {
         function handleClickOutside(event) {

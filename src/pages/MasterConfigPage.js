@@ -2,45 +2,6 @@ import React, { useMemo, useState, useEffect } from "react";
 import { Info, Edit, Trash2 } from "lucide-react";
 import { api } from '../utils/api';
 
-const initialRows = [
-  {
-    srno: 1,
-    typeName: "Stand-up Meeting",
-    remarks: "Daily sync for team",
-    createdAt: "2025-09-15T09:30:00Z",
-    updatedAt: "2025-10-10T11:00:00Z",
-  },
-  {
-    srno: 2,
-    typeName: "Sprint Planning",
-    remarks: "Plan sprint backlog",
-    createdAt: "2025-08-10T12:15:00Z",
-    updatedAt: "2025-10-01T10:45:00Z",
-  },
-  {
-    srno: 3,
-    typeName: "Retrospective",
-    remarks: "Sprint review and feedback",
-    createdAt: "2025-07-05T08:00:00Z",
-    updatedAt: "2025-09-25T14:20:00Z",
-  },
-  {
-    srno: 4,
-    typeName: "Client Review",
-    remarks: "External stakeholder review",
-    createdAt: "2025-09-01T10:00:00Z",
-    updatedAt: "2025-10-12T16:10:00Z",
-  },
-  {
-    srno: 5,
-    typeName: "Budget Review",
-    remarks: "Quarterly finance check",
-    createdAt: "2025-06-20T15:30:00Z",
-    updatedAt: "2025-09-18T12:00:00Z",
-  }
-];
-
-// Enhanced timestamp formatting function
 const fmt = (timestamp) => {
   if (!timestamp) return 'N/A';
   
@@ -48,7 +9,6 @@ const fmt = (timestamp) => {
     const date = new Date(timestamp);
     if (isNaN(date.getTime())) return 'N/A';
     
-    // Format as: "MMM DD, YYYY at HH:MM AM/PM"
     return date.toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -63,7 +23,6 @@ const fmt = (timestamp) => {
   }
 };
 
-// Alternative format for relative time (e.g., "2 hours ago")
 const fmtRelative = (timestamp) => {
   if (!timestamp) return 'N/A';
   
@@ -82,7 +41,6 @@ const fmtRelative = (timestamp) => {
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
     
-    // For older dates, show the formatted date
     return fmt(timestamp);
   } catch (error) {
     console.error('Error formatting relative timestamp:', timestamp, error);

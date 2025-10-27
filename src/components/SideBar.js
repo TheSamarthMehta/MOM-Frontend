@@ -7,7 +7,6 @@ const Sidebar = ({ navigate }) => {
     const { pathname } = useLocation();
     const { logout, hasAnyRole } = useAuth();
     
-    // Navigation items with icons
     const navLinks = [
         { 
             text: 'Dashboard', 

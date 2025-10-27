@@ -29,16 +29,12 @@ const MainLayout = () => {
         title={title}
       />
 
-      {/* App Shell */}
       <div className="pt-20">
-        {/* Off-canvas sidebar */}
         <div className={`fixed left-0 right-0 top-20 bottom-0 z-40 ${open ? '' : 'pointer-events-none'}`}>
-          {/* Backdrop */}
           <div
             className={`absolute inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0'}`}
             onClick={() => setOpen(false)}
           />
-          {/* Drawer */}
           <div className={`absolute left-0 top-0 bottom-0 transform transition-transform duration-300 ease-in-out ${open ? 'translate-x-0' : '-translate-x-full'}`}>
             <div className="w-72 max-w-[80vw] h-full bg-white shadow-strong">
               <Sidebar
@@ -51,7 +47,6 @@ const MainLayout = () => {
           </div>
         </div>
 
-        {/* Content */}
         <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           <Outlet />
         </main>

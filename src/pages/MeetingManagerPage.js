@@ -32,7 +32,6 @@ const MeetingManagerPage = () => {
         api.get('/meeting-types')
       ]);
       
-      // Transform backend data to frontend format
       const transformedMeetings = (meetingsResponse.data || []).map(meeting => {
         const meetingDate = meeting.meetingDate ? new Date(meeting.meetingDate) : null;
         const meetingTime = meeting.meetingTime ? new Date(meeting.meetingTime) : null;
