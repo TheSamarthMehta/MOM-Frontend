@@ -12,73 +12,40 @@ const DocumentsManagerPage = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadMeeting, setUploadMeeting] = useState("");
-  const [dragActive, setDragActive] = useState(false);
-
-
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        console.log('Fetching meetings...');
-        const meetingsResponse = await api.get('/meetings?limit=50');
-        console.log('Meetings response:', meetingsResponse);
-        const rawMeetings = meetingsResponse.data || [];
-        setMeetings(rawMeetings);
-        
-        if (rawMeetings.length === 0) {
-          console.log('No meetings found, skipping document fetch');
-          setDocuments([]);
-          setLoading(false);
-          return;
-        }
-        
-        const allDocuments = [];
-        for (const meeting of rawMeetings) {
-          try {
-            const meetingId = meeting._id || meeting.id;
-            if (!meetingId) {
-              console.warn('Meeting has no ID:', meeting);
-              continue;
-            }
-            
-            console.log(`Fetching documents for meeting ${meetingId}...`);
-            const docsResponse = await api.get(`/meetings/${meetingId}/documents`);
-            console.log(`Documents response for meeting ${meetingId}:`, docsResponse);
-            const meetingDocs = (docsResponse.data || []).map(doc => ({
-              ...doc,
-              meetingTitle: meeting.meetingTitle || 'Unknown Meeting',
-              meetingId: meetingId
-            }));
-            allDocuments.push(...meetingDocs);
-          } catch (err) {
-            console.error(`Failed to fetch documents for meeting ${meeting._id || meeting.id}:`, err);
-            console.error('Error details:', {
-              message: err.message,
-              response: err.response,
-              status: err.response?.status
-            });
-          }
-        }
-        console.log('Total documents loaded:', allDocuments.length);
-        setDocuments(allDocuments);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        console.error('Error details:', {
-          message: err.message,
-          response: err.response,
-          status: err.response?.status
-        });
-        setError(err.message || 'Failed to load data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const meetingsResponse = await api.get('/meetings?limit=50');
+      setMeetings(meetingsResponse.data || []);
+      
+      const allDocuments = [];
+      for (const meeting of meetingsResponse.data || []) {
+        try {
+          const docsResponse = await api.get(`/meetings/${meeting._id}/documents`);
+          const meetingDocs = (docsResponse.data || []).map(doc => ({
+            ...doc,
+            meetingTitle: meeting.meetingTitle || 'Unknown Meeting',
+            meetingId: meeting._id
+          }));
+          allDocuments.push(...meetingDocs);
+        } catch (err) {
+          // Skip failed document fetches
+        }
+      }
+      setDocuments(allDocuments);
+    } catch (err) {
+      setError(err.message || 'Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
@@ -116,14 +83,10 @@ const DocumentsManagerPage = () => {
   const handleDelete = async (doc) => {
     if (window.confirm(`Are you sure you want to delete "${doc.documentName}"?`)) {
       try {
-        setLoading(true);
         await api.delete(`/meeting-documents/${doc._id}`);
         setDocuments((prev) => prev.filter((d) => d._id !== doc._id));
       } catch (err) {
-        console.error('Error deleting document:', err);
         alert(err.message || 'Failed to delete document');
-      } finally {
-        setLoading(false);
       }
     }
   };
@@ -138,14 +101,13 @@ const DocumentsManagerPage = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Download failed');
+        throw new Error('View failed');
       }
 
       const blob = await response.blob();
       const fileURL = URL.createObjectURL(blob);
       window.open(fileURL, '_blank');
     } catch (err) {
-      console.error('Error viewing document:', err);
       alert(err.message || 'Failed to view document');
     }
   };
@@ -173,47 +135,18 @@ const DocumentsManagerPage = () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Error downloading document:', err);
       alert(err.message || 'Failed to download document');
     }
   };
 
   const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setSelectedFile(file);
-    }
-  };
-
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setSelectedFile(e.dataTransfer.files[0]);
-      setShowUploadModal(true);
-    }
+    setSelectedFile(e.target.files[0]);
   };
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!selectedFile) {
-      alert("Please select a file to upload.");
-      return;
-    }
-    if (!uploadMeeting) {
-      alert("Please select a meeting.");
+    if (!selectedFile || !uploadMeeting) {
+      alert("Please select a file and meeting.");
       return;
     }
 
@@ -242,8 +175,7 @@ const DocumentsManagerPage = () => {
       });
 
       if (!uploadResponse.ok) {
-        const error = await uploadResponse.json();
-        throw new Error(error.message || 'Upload failed');
+        throw new Error('Upload failed');
       }
       
       const newDoc = {
@@ -257,7 +189,6 @@ const DocumentsManagerPage = () => {
       setUploadMeeting("");
       setShowUploadModal(false);
     } catch (err) {
-      console.error('Error uploading document:', err);
       alert(err.message || 'Failed to upload document');
     } finally {
       setLoading(false);
@@ -309,28 +240,18 @@ const DocumentsManagerPage = () => {
         <p className="text-gray-600">Upload meeting documents, view document list, download/view, and delete/replace documents.</p>
       </div>
 
-      {/* Upload Section */}
       <div className="bg-white rounded-xl shadow p-6">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Upload Meeting Documents</h2>
         <div 
           onClick={() => setShowUploadModal(true)}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-          className={`border-2 border-dashed rounded-lg p-8 text-center transition cursor-pointer ${
-            dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400'
-          }`}
+          className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition cursor-pointer hover:border-blue-400"
         >
-          <Upload size={48} className={`mx-auto mb-4 ${dragActive ? 'text-blue-500' : 'text-gray-400'}`} />
-          <p className="text-gray-600 mb-2">
-            {dragActive ? 'Drop file here' : 'Click to upload or drag and drop'}
-          </p>
+          <Upload size={48} className="mx-auto mb-4 text-gray-400" />
+          <p className="text-gray-600 mb-2">Click to upload documents</p>
           <p className="text-sm text-gray-500">Supports: PDF, DOCX, PPTX, XLSX, Images (Max 10MB)</p>
         </div>
       </div>
 
-      {/* Document List */}
       <div className="bg-white rounded-xl shadow p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-gray-800">Document List View</h2>
@@ -423,9 +344,6 @@ const DocumentsManagerPage = () => {
         )}
       </div>
 
-
-
-      {/* Upload Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md mx-auto relative">
