@@ -1,20 +1,11 @@
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8800/api';
-
-const getToken = () => {
-    return localStorage.getItem('token');
-};
+import { getApiUrl, getAuthHeaders } from '../config/constants';
 
 const fetchData = async (endpoint, method = 'GET', body = null) => {
-    const url = `${API_URL}${endpoint}`;
-    const token = getToken();
-    
+    const url = getApiUrl(endpoint);
     const headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
     };
-    
-    if (token) {
-        headers.Authorization = `Bearer ${token}`;
-    }
     
     const options = {
         method,

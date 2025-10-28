@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { api } from '../utils/api';
+import LoadingSpinner from '../components/common/LoadingSpinner';
+import ErrorMessage from '../components/common/ErrorMessage';
+import Modal from '../components/common/Modal';
+import PageHeader from '../components/common/PageHeader';
+import DataTable from '../components/common/DataTable';
+import { FormInput, FormSelect, FormTextArea, FormButton } from '../components/common/FormComponents';
 
 const MeetingManagerPage = () => {
   const [meetings, setMeetings] = useState([]);
@@ -190,278 +196,210 @@ const MeetingManagerPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-          <div className="h-10 bg-gray-200 rounded w-24 mb-8"></div>
-          <div className="h-96 bg-gray-200 rounded-xl"></div>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner text="Loading meetings..." fullScreen />;
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-6">
-          <div className="flex items-center">
-            <svg className="w-6 h-6 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    return <ErrorMessage error={error} onRetry={fetchData} />;
+  }
+
+  const createButton = (
+    <button 
+      onClick={openCreateModal}
+      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+    >
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+      </svg>
+      Create Meeting
+    </button>
+  );
+
+  const tableColumns = [
+    {
+      key: 'title',
+      header: 'Title',
+      render: (value, meeting) => (
+        <div className="flex items-center">
+          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <div>
-              <h3 className="text-lg font-semibold text-red-800">Error Loading Meeting Data</h3>
-              <p className="text-red-600">{error}</p>
-            </div>
+          </div>
+          <div>
+            <div className="text-sm font-medium text-gray-900">{value}</div>
+            {meeting.agenda && (
+              <div className="text-xs text-gray-500 truncate max-w-xs">{meeting.agenda}</div>
+            )}
           </div>
         </div>
-        <button 
-          onClick={fetchData}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
-        >
-          Try Again
-        </button>
-      </div>
-    );
-  }
+      )
+    },
+    {
+      key: 'type',
+      header: 'Type',
+      render: (value) => (
+        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+          {value}
+        </span>
+      )
+    },
+    {
+      key: 'date',
+      header: 'Date',
+      render: (value) => <span className="text-sm text-gray-600">{value}</span>
+    },
+    {
+      key: 'time',
+      header: 'Time',
+      render: (value) => <span className="text-sm text-gray-600">{value}</span>
+    },
+    {
+      key: 'location',
+      header: 'Location',
+      render: (value) => <span className="text-sm text-gray-600">{value || 'N/A'}</span>
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (value) => (
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+          value === 'Completed' ? 'bg-green-100 text-green-800' :
+          value === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
+          value === 'Cancelled' ? 'bg-red-100 text-red-800' :
+          'bg-gray-100 text-gray-800'
+        }`}>
+          {value}
+        </span>
+      )
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (_, meeting) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => openEditModal(meeting)}
+            className="text-blue-600 hover:text-blue-900 transition-colors duration-200"
+          >
+            Edit
+          </button>
+          <button 
+            onClick={() => handleDelete(meeting.id)}
+            className="text-red-600 hover:text-red-900 transition-colors duration-200"
+          >
+            Delete
+          </button>
+        </div>
+      )
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Meeting Manager</h1>
-            <p className="text-gray-600 mt-2">Create and manage your meetings</p>
-          </div>
-          <button 
-            onClick={openCreateModal}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            Create Meeting
-          </button>
-        </div>
-      </div>
+      <PageHeader 
+        title="Meeting Manager"
+        subtitle="Create and manage your meetings"
+        actionButton={createButton}
+      />
 
-      {/* Meetings Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-        {meetings.length === 0 ? (
-          <div className="text-center py-12">
-            <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No meetings found</h3>
-            <p className="text-gray-500 mb-6">Create your first meeting to get started!</p>
-            <button 
-              onClick={openCreateModal}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
-            >
-              Create Meeting
-            </button>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Title</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Time</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Location</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {meetings.map((meeting) => (
-                  <tr key={meeting.id} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{meeting.title}</div>
-                          {meeting.agenda && (
-                            <div className="text-xs text-gray-500 truncate max-w-xs">{meeting.agenda}</div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                        {meeting.type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{meeting.date}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{meeting.time}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{meeting.location || 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        meeting.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                        meeting.status === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
-                        meeting.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {meeting.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => openEditModal(meeting)}
-                          className="text-blue-600 hover:text-blue-900 transition-colors duration-200"
-                        >
-                          Edit
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(meeting.id)}
-                          className="text-red-600 hover:text-red-900 transition-colors duration-200"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <DataTable
+        columns={tableColumns}
+        data={meetings}
+        emptyMessage="No meetings found"
+        emptyIcon={
+          <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        }
+      />
 
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  {editingMeeting ? 'Edit Meeting' : 'Create Meeting'}
-                </h2>
-                <button 
-                  onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
+      <Modal
+        isOpen={showModal}
+        onClose={closeModal}
+        title={editingMeeting ? 'Edit Meeting' : 'Create Meeting'}
+        size="lg"
+      >
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <FormInput
+            label="Title"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            placeholder="Enter meeting title"
+            required
+          />
+          
+          <FormSelect
+            label="Type"
+            value={form.type}
+            onChange={(e) => setForm({ ...form, type: e.target.value })}
+            options={meetingTypes.map(type => ({
+              value: type.meetingTypeName,
+              label: type.meetingTypeName
+            }))}
+            placeholder="Select type"
+            required
+          />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormInput
+              label="Date"
+              type="date"
+              value={form.date}
+              onChange={(e) => setForm({ ...form, date: e.target.value })}
+              required
+            />
             
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Title *</label>
-                <input
-                  type="text"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  placeholder="Enter meeting title"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Type *</label>
-                <select
-                  value={form.type}
-                  onChange={(e) => setForm({ ...form, type: e.target.value })}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
-                >
-                  <option value="">Select type</option>
-                  {meetingTypes.map((type) => (
-                    <option key={type._id || type.id} value={type.meetingTypeName}>
-                      {type.meetingTypeName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Date *</label>
-                  <input
-                    type="date"
-                    value={form.date}
-                    onChange={(e) => setForm({ ...form, date: e.target.value })}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Time *</label>
-                  <input
-                    type="time"
-                    value={form.time}
-                    onChange={(e) => setForm({ ...form, time: e.target.value })}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
-                <input
-                  type="number"
-                  value={form.duration}
-                  onChange={(e) => setForm({ ...form, duration: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  placeholder="e.g., 60"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                <input
-                  type="text"
-                  value={form.location}
-                  onChange={(e) => setForm({ ...form, location: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  placeholder="Meeting location"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Agenda</label>
-                <textarea
-                  value={form.agenda}
-                  onChange={(e) => setForm({ ...form, agenda: e.target.value })}
-                  rows="4"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none"
-                  placeholder="Meeting agenda"
-                />
-              </div>
-              
-              <div className="flex gap-3 pt-4">
-                <button 
-                  type="submit" 
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
-                >
-                  {editingMeeting ? 'Update Meeting' : 'Create Meeting'}
-                </button>
-                <button 
-                  type="button" 
-                  onClick={closeModal}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg font-medium transition-colors duration-200"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+            <FormInput
+              label="Time"
+              type="time"
+              value={form.time}
+              onChange={(e) => setForm({ ...form, time: e.target.value })}
+              required
+            />
           </div>
-        </div>
-      )}
+          
+          <FormInput
+            label="Duration (minutes)"
+            type="number"
+            value={form.duration}
+            onChange={(e) => setForm({ ...form, duration: e.target.value })}
+            placeholder="e.g., 60"
+          />
+          
+          <FormInput
+            label="Location"
+            value={form.location}
+            onChange={(e) => setForm({ ...form, location: e.target.value })}
+            placeholder="Meeting location"
+          />
+          
+          <FormTextArea
+            label="Agenda"
+            value={form.agenda}
+            onChange={(e) => setForm({ ...form, agenda: e.target.value })}
+            placeholder="Meeting agenda"
+            rows={4}
+          />
+          
+          <div className="flex gap-3 pt-4">
+            <FormButton
+              type="submit"
+              className="flex-1"
+            >
+              {editingMeeting ? 'Update Meeting' : 'Create Meeting'}
+            </FormButton>
+            <FormButton
+              type="button"
+              variant="secondary"
+              onClick={closeModal}
+              className="flex-1"
+            >
+              Cancel
+            </FormButton>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

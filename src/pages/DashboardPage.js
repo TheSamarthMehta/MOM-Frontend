@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../utils/api';
+import LoadingSpinner from '../components/common/LoadingSpinner';
+import ErrorMessage from '../components/common/ErrorMessage';
+import PageHeader from '../components/common/PageHeader';
+import DataTable from '../components/common/DataTable';
 
 const DashboardPage = () => {
     const [meetings, setMeetings] = useState([]);
@@ -81,63 +85,64 @@ const DashboardPage = () => {
     );
 
     if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-50 p-6">
-                <div className="animate-pulse">
-                    <div className="h-8 bg-gray-200 rounded w-1/4 mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-                    <div className="h-10 bg-gray-200 rounded w-24 mb-8"></div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        {[...Array(4)].map((_, i) => (
-                            <div key={i} className="h-32 bg-gray-200 rounded-xl"></div>
-                        ))}
-                    </div>
-                    <div className="h-96 bg-gray-200 rounded-xl"></div>
-                </div>
-            </div>
-        );
+        return <LoadingSpinner text="Loading dashboard..." fullScreen />;
     }
 
     if (error) {
-        return (
-            <div className="min-h-screen bg-gray-50 p-6">
-                <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-6">
-                    <div className="flex items-center">
-                        <svg className="w-6 h-6 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <div>
-                            <h3 className="text-lg font-semibold text-red-800">Error Loading Data</h3>
-                            <p className="text-red-600">{error}</p>
-                        </div>
-                    </div>
-                </div>
-                <button 
-                    onClick={fetchData}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
-                >
-                    Try Again
-                </button>
-            </div>
-        );
+        return <ErrorMessage error={error} onRetry={fetchData} />;
     }
+
+    const refreshButton = (
+        <button 
+            onClick={fetchData}
+            className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 shadow-sm"
+        >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>Refresh</span>
+        </button>
+    );
+
+    const tableColumns = [
+        {
+            key: 'title',
+            header: 'Meeting Title',
+            render: (value) => <div className="font-medium text-gray-900">{value}</div>
+        },
+        {
+            key: 'type',
+            header: 'Type',
+            render: (value) => <div className="text-gray-600">{value}</div>
+        },
+        {
+            key: 'date',
+            header: 'Date',
+            render: (value) => <div className="text-gray-600">{value}</div>
+        },
+        {
+            key: 'time',
+            header: 'Time',
+            render: (value) => <div className="text-gray-600">{value}</div>
+        },
+        {
+            key: 'status',
+            header: 'Status',
+            render: (value) => (
+                <span className={getStatusBadge(value)}>
+                    {value}
+                </span>
+            )
+        }
+    ];
 
     return (
         <div className="min-h-screen bg-gray-50 p-6">
-            {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-                <p className="text-gray-600 mb-4">Welcome back! Here's your meeting overview</p>
-                <button 
-                    onClick={fetchData}
-                    className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 shadow-sm"
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    <span>Refresh</span>
-                </button>
-            </div>
+            <PageHeader 
+                title="Dashboard"
+                subtitle="Welcome back! Here's your meeting overview"
+                actionButton={refreshButton}
+            />
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -198,52 +203,16 @@ const DashboardPage = () => {
                 </div>
 
                 <div className="p-6">
-                    {meetings.length === 0 ? (
-                        <div className="text-center py-12">
+                    <DataTable
+                        columns={tableColumns}
+                        data={meetings}
+                        emptyMessage="No meetings found"
+                        emptyIcon={
                             <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">No meetings found</h3>
-                            <p className="text-gray-500">Get started by creating your first meeting.</p>
-                        </div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="border-b border-gray-200">
-                                        <th className="text-left py-3 px-4 font-semibold text-gray-600 text-sm uppercase tracking-wide">Meeting Title</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-gray-600 text-sm uppercase tracking-wide">Type</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-gray-600 text-sm uppercase tracking-wide">Date</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-gray-600 text-sm uppercase tracking-wide">Time</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-gray-600 text-sm uppercase tracking-wide">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {meetings.map((meeting, index) => (
-                                        <tr key={meeting.id || index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150">
-                                            <td className="py-4 px-4">
-                                                <div className="font-medium text-gray-900">{meeting.title}</div>
-                                            </td>
-                                            <td className="py-4 px-4">
-                                                <div className="text-gray-600">{meeting.type}</div>
-                                            </td>
-                                            <td className="py-4 px-4">
-                                                <div className="text-gray-600">{meeting.date}</div>
-                                            </td>
-                                            <td className="py-4 px-4">
-                                                <div className="text-gray-600">{meeting.time}</div>
-                                            </td>
-                                            <td className="py-4 px-4">
-                                                <span className={getStatusBadge(meeting.status)}>
-                                                    {meeting.status}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                        }
+                    />
                 </div>
             </div>
         </div>

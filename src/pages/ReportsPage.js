@@ -13,8 +13,6 @@ const ReportsPage = () => {
   const [cancelledMeetings, setCancelledMeetings] = useState([]);
   const [dashboardStats, setDashboardStats] = useState(null);
 
-
-
   const reportCards = [
     { title: "Meeting Summary Report", icon: FileText, description: "Overview of all meetings with key metrics", type: "summary", color: "blue" },
     { title: "Attendance Report", icon: TrendingUp, description: "Meeting-wise attendance analysis", type: "attendance", color: "green" },
@@ -189,7 +187,7 @@ const ReportsPage = () => {
           >
             <card.icon size={32} className={reportType === card.type ? "text-white" : `text-${card.color}-500`} />
             <h3 className={`font-semibold mt-4 ${reportType === card.type ? "text-white" : "text-gray-800"}`}>
-              {card.title}
+              {card.title ? card.title : '-'}
             </h3>
             <p className={`text-sm mt-2 ${reportType === card.type ? "text-white/90" : "text-gray-600"}`}>
               {card.description}
