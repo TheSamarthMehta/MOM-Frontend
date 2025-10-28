@@ -1,17 +1,14 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
-import DashboardPage from "./pages/DashboardPage";
-import ProfilePage from "./pages/ProfilePage";
-import MasterConfigPage from "./pages/MasterConfigPage";
-import StaffConfigPage from "./pages/StaffConfigPage";
-import MeetingManagerPage from "./pages/MeetingManagerPage";
-import AttendancePage from "./pages/AttendancePage";
-import DocumentsManagerPage from "./pages/DocumentsManagerPage";
-import MainLayout from "./components/MainLayout";
-import ReportsPage from "./pages/ReportsPage";
-import ProtectedRoute from "./components/ProtectedRoute";
-import { AuthProvider } from "./contexts/AuthContext";
+import { LoginPage, SignupPage, ProtectedRoute, AuthProvider } from "./features/auth";
+import { DashboardPage } from "./features/dashboard";
+import { ProfilePage } from "./features/profile";
+import { MasterConfigPage } from "./features/masterConfig";
+import { StaffConfigPage } from "./features/staff";
+import { MeetingManagerPage } from "./features/meetings";
+import { AttendancePage } from "./features/attendance";
+import { DocumentsManagerPage } from "./features/documents";
+import { ReportsPage } from "./features/reports";
+import { MainLayout } from "./layouts";
 
 const App = () => {
   return(

@@ -1,0 +1,107 @@
+MOM-Management/frontend/src/
+│
+├── 📁 api/                                  # Backend Communication Layer
+│   ├── apiService.js                        # Generic API utilities
+│   ├── dashboardService.js                  # Dashboard data fetching
+│   ├── documentService.js                   # Document operations
+│   ├── meetingService.js                    # Meeting operations
+│   ├── staffService.js                      # Staff operations
+│   └── index.js                             # ✨ Barrel export
+│
+├── 📁 features/                             # Feature Modules (Domain-Driven)
+│   │
+│   ├── 📁 auth/                             # 🔐 Authentication & Authorization
+│   │   ├── AuthContext.js                   # Auth state management
+│   │   ├── LoginPage.js                     # Login UI
+│   │   ├── SignupPage.js                    # Registration UI
+│   │   ├── ProtectedRoute.js                # Route guard
+│   │   └── index.js                         # ✨ Barrel export
+│   │
+│   ├── 📁 dashboard/                        # 📊 Main Dashboard
+│   │   ├── DashboardPage.js                 # Dashboard UI
+│   │   └── index.js                         # ✨ Barrel export
+│   │
+│   ├── 📁 masterConfig/                     # ⚙️ Meeting Types Configuration
+│   │   ├── MasterConfigPage.js              # Config UI
+│   │   ├── masterConfigHandlers.js          # Business logic
+│   │   └── index.js                         # ✨ Barrel export
+│   │
+│   ├── 📁 staff/                            # 👥 Staff Management
+│   │   ├── StaffConfigPage.js               # Staff UI
+│   │   └── index.js                         # ✨ Barrel export
+│   │
+│   ├── 📁 meetings/                         # 📅 Meeting Management
+│   │   ├── MeetingManagerPage.js            # Meetings UI
+│   │   └── index.js                         # ✨ Barrel export
+│   │
+│   ├── 📁 attendance/                       # ✅ Attendance Tracking
+│   │   ├── AttendancePage.js                # Attendance UI
+│   │   └── index.js                         # ✨ Barrel export
+│   │
+│   ├── 📁 documents/                        # 📄 Document Management
+│   │   ├── DocumentsManagerPage.js          # Documents UI
+│   │   └── index.js                         # ✨ Barrel export
+│   │
+│   ├── 📁 reports/                          # 📈 Reports & Analytics
+│   │   ├── ReportsPage.js                   # Reports UI
+│   │   └── index.js                         # ✨ Barrel export
+│   │
+│   └── 📁 profile/                          # 👤 User Profile
+│       ├── ProfilePage.js                   # Profile UI
+│       └── index.js                         # ✨ Barrel export
+│
+├── 📁 layouts/                              # Page Structure Components
+│   ├── MainLayout.js                        # Main app layout
+│   ├── Header.js                            # Top navigation
+│   ├── SideBar.js                           # Side navigation
+│   └── index.js                             # ✨ Barrel export
+│
+├── 📁 shared/                               # Shared Resources
+│   │
+│   ├── 📁 components/                       # Reusable UI Components
+│   │   ├── ActionIcons.js                   # Action button icons
+│   │   ├── DataTable.js                     # Generic data table
+│   │   ├── ErrorMessage.js                  # Error display
+│   │   ├── FileComponents.js                # File upload/display
+│   │   ├── FormComponents.js                # Form inputs
+│   │   ├── LoadingSpinner.js                # Loading indicator
+│   │   ├── Modal.js                         # Modal dialog
+│   │   ├── PageHeader.js                    # Page title header
+│   │   ├── CustomSelect.js                  # Custom select dropdown
+│   │   └── index.js                         # ✨ Barrel export
+│   │
+│   ├── 📁 utils/                            # Utility Functions
+│   │   ├── api.js                           # API client config
+│   │   ├── commonUtils.js                   # Helper functions
+│   │   └── index.js                         # ✨ Barrel export
+│   │
+│   ├── 📁 constants/                        # Application Constants
+│   │   ├── constants.js                     # App-wide constants
+│   │   └── index.js                         # ✨ Barrel export
+│   │
+│   └── 📁 hooks/                            # Custom React Hooks (Future)
+│       └── index.js                         # ✨ Barrel export
+│
+├── 📄 App.js                                # Root Application Component
+├── 📄 App.css                               # Global styles
+├── 📄 index.js                              # Entry point
+├── 📄 index.css                             # Base styles
+│
+└── 📚 Documentation/
+    ├── STRUCTURE.md                         # Detailed structure docs
+    ├── ARCHITECTURE.md                      # Quick reference
+    └── MIGRATION.md                         # Migration summary
+
+Legend:
+  ✨ = Barrel export file (clean imports)
+  📁 = Folder
+  📄 = File
+  🔐 = Authentication
+  📊 = Dashboard
+  ⚙️ = Configuration
+  👥 = Staff
+  📅 = Meetings
+  ✅ = Attendance
+  📄 = Documents
+  📈 = Reports
+  👤 = Profile
