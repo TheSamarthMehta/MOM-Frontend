@@ -10,19 +10,13 @@ import { DocumentsManagerPage } from "../features/documents";
 import { ReportsPage } from "../features/reports";
 import { MainLayout } from "../layouts";
 
-/**
- * AppRoutes component
- * Defines all application routes with their respective components and protection levels
- */
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Public Routes */}
       <Route path="/" element={<Navigate to="/login" />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
 
-      {/* Protected Routes - Wrapped in MainLayout */}
       <Route element={<MainLayout />}>
         <Route
           path="/dashboard"

@@ -1,25 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import Header from './Header';
-import Sidebar from './SideBar';
+import { Header, SideBar } from './index';
+import { getPageTitle } from '../shared/constants';
 
 const MainLayout = () => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
-  const title = useMemo(() => {
-    const map = {
-      '/dashboard': 'Dashboard',
-      '/profile': 'Profile',
-      '/master_configure': 'Master Configuration',
-      '/meetings_manager': 'Meetings Management',
-      '/attendance': 'Attendance & Participants',
-      '/documents_manager': 'Documents Management',
-      '/report': 'Reports & Analytics'
-    };
-    return map[pathname] || '';
-  }, [pathname]);
+  const title = useMemo(() => getPageTitle(pathname), [pathname]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -37,7 +26,7 @@ const MainLayout = () => {
           />
           <div className={`absolute left-0 top-0 bottom-0 transform transition-transform duration-300 ease-in-out ${open ? 'translate-x-0' : '-translate-x-full'}`}>
             <div className="w-72 max-w-[80vw] h-full bg-white shadow-strong">
-              <Sidebar
+              <SideBar
                 navigate={(path) => {
                   navigate(path);
                   setOpen(false);
