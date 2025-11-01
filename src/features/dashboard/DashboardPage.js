@@ -1,14 +1,12 @@
 import React from 'react';
-import { useDashboard } from './hooks';
-import { 
-  LoadingSpinner, 
-  ErrorMessage, 
-  PageHeader, 
-  DataTable,
-  ActionIcons,
-  StatusBadge
-} from '../../shared/components';
-import { MEETING_STATUS } from '../../shared/constants';
+import { useDashboard } from './hooks/useDashboard';
+import LoadingSpinner from '../../shared/components/LoadingSpinner';
+import ErrorMessage from '../../shared/components/ErrorMessage';
+import PageHeader from '../../shared/components/PageHeader';
+import DataTable from '../../shared/components/DataTable';
+import { ActionIcons } from '../../shared/components/ActionIcons';
+import { StatusBadge } from '../../shared/components/StatusBadge';
+import { MEETING_STATUS } from '../../shared/constants/enums';
 
 const DashboardPage = () => {
   const { stats, meetings, loading, error, refetch } = useDashboard();

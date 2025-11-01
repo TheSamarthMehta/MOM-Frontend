@@ -1,21 +1,17 @@
 ﻿import React, { useEffect, useState } from "react";
-import { useStaff } from "./hooks";
-import { useForm } from "../../shared/hooks";
-import { 
-  LoadingSpinner, 
-  ErrorMessage, 
-  Modal, 
-  PageHeader, 
-  DataTable, 
-  FormInput, 
-  FormSelect, 
-  FormButton,
-  ActionIcons,
-  RoleBadge
-} from "../../shared/components";
+import { useStaff } from "./hooks/useStaff";
+import { useForm } from "../../shared/hooks/useForm";
+import LoadingSpinner from "../../shared/components/LoadingSpinner";
+import ErrorMessage from "../../shared/components/ErrorMessage";
+import Modal from "../../shared/components/Modal";
+import PageHeader from "../../shared/components/PageHeader";
+import DataTable from "../../shared/components/DataTable";
+import { FormInput, FormSelect, FormButton } from "../../shared/components/FormComponents";
+import { ActionIcons } from "../../shared/components/ActionIcons";
+import { RoleBadge } from "../../shared/components/StatusBadge";
 import { StaffTransformer } from "../../shared/utils/dataTransformers";
 import { schemas } from "../../shared/utils/validators";
-import { USER_ROLES } from "../../shared/constants";
+import { USER_ROLES } from "../../shared/constants/enums";
 import { notify } from "../../shared/utils/notifications";
 
 const StaffConfigPage = () => {

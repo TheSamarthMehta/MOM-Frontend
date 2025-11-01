@@ -1,4 +1,4 @@
-import { getApiUrl, getAuthHeaders } from '../constants';
+import { getApiUrl, getAuthHeaders } from '../constants/constants';
 import { getErrorMessage } from './errorHandler';
 
 /**

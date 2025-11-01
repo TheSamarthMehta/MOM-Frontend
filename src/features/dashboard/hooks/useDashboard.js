@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
-import { useFetch } from '../../../shared/hooks';
-import { api } from '../../../shared/utils';
+import { useFetch } from '../../../shared/hooks/useFetch';
+import { api } from '../../../shared/utils/api';
 import { DashboardTransformer, MeetingTransformer } from '../../../shared/utils/dataTransformers';
 import { handleApiError } from '../../../shared/utils/errorHandler';
 

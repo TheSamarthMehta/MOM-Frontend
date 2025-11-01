@@ -1,4 +1,4 @@
-import { getApiUrl, getAuthHeaders, getFileUploadUrl, API_ENDPOINTS } from '../shared/constants';
+import { getApiUrl, getAuthHeaders, getFileUploadUrl, API_ENDPOINTS } from '../shared/constants/constants';
 
 // Enhanced API service with centralized configuration
 class ApiService {

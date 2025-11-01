@@ -1,22 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { useMeetings } from "./hooks";
-import { useForm } from "../../shared/hooks";
-import { 
-  LoadingSpinner, 
-  ErrorMessage, 
-  Modal, 
-  PageHeader, 
-  DataTable, 
-  FormInput, 
-  FormSelect, 
-  FormTextArea, 
-  FormButton,
-  ActionIcons,
-  StatusBadge
-} from "../../shared/components";
+import { useMeetings } from "./hooks/useMeetings";
+import { useForm } from "../../shared/hooks/useForm";
+import LoadingSpinner from "../../shared/components/LoadingSpinner";
+import ErrorMessage from "../../shared/components/ErrorMessage";
+import Modal from "../../shared/components/Modal";
+import PageHeader from "../../shared/components/PageHeader";
+import DataTable from "../../shared/components/DataTable";
+import { FormInput, FormSelect, FormTextArea, FormButton } from "../../shared/components/FormComponents";
+import { ActionIcons } from "../../shared/components/ActionIcons";
+import { StatusBadge } from "../../shared/components/StatusBadge";
 import { MeetingTransformer } from "../../shared/utils/dataTransformers";
 import { schemas } from "../../shared/utils/validators";
-import { MEETING_STATUS } from "../../shared/constants";
+import { MEETING_STATUS } from "../../shared/constants/enums";
 import { notify } from "../../shared/utils/notifications";
 
 const MeetingManagerPage = () => {

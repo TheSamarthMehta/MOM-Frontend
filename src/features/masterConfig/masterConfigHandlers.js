@@ -1,4 +1,4 @@
-import { api } from '../../shared/utils';
+import { api } from '../../shared/utils/api';
 
 export const fmt = (timestamp) => {
   if (!timestamp) return 'N/A';

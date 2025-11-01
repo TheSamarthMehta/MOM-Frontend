@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { UserCheck, UserX, Users } from "lucide-react";
-import { api } from '../../shared/utils';
+import { api } from '../../shared/utils/api';
 
 const AttendancePage = () => {
   const [selectedMeeting, setSelectedMeeting] = useState(null);

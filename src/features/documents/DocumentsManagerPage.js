@@ -1,23 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Upload, Search } from "lucide-react";
-import { api } from '../../shared/utils';
+import { api } from '../../shared/utils/api';
 import DocumentService from '../../api/documentService';
-import { 
-  LoadingSpinner, 
-  ErrorMessage, 
-  Modal, 
-  PageHeader, 
-  DataTable, 
-  FormInput, 
-  FormSelect, 
-  FormButton,
-  formatFileSize, 
-  getFileType, 
-  getFileIcon, 
-  FileUpload, 
-  FileActions,
-  ActionIcons 
-} from '../../shared/components';
+import LoadingSpinner from '../../shared/components/LoadingSpinner';
+import ErrorMessage from '../../shared/components/ErrorMessage';
+import Modal from '../../shared/components/Modal';
+import PageHeader from '../../shared/components/PageHeader';
+import DataTable from '../../shared/components/DataTable';
+import { FormInput, FormSelect, FormButton } from '../../shared/components/FormComponents';
+import { formatFileSize, getFileType, getFileIcon, FileUpload, FileActions } from '../../shared/components/FileComponents';
+import { ActionIcons } from '../../shared/components/ActionIcons';
 
 const DocumentsManagerPage = () => {
   const [searchQuery, setSearchQuery] = useState("");

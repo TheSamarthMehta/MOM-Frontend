@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FileText, TrendingUp, XCircle, Download, Calendar } from "lucide-react";
-import { api } from '../../shared/utils';
+import { api } from '../../shared/utils/api';
 
 const ReportsPage = () => {
   const [reportType, setReportType] = useState("summary");

@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
-import { useApi, useModal } from '../../../shared/hooks';
-import { api } from '../../../shared/utils';
+import { useApi } from '../../../shared/hooks/useApi';
+import { useModal } from '../../../shared/hooks/useModal';
+import { api } from '../../../shared/utils/api';
 import { StaffTransformer } from '../../../shared/utils/dataTransformers';
 import { handleApiError } from '../../../shared/utils/errorHandler';
 

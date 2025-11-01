@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Header, SideBar } from './index';
-import { getPageTitle } from '../shared/constants';
+import Header from './Header';
+import SideBar from './SideBar';
+import { getPageTitle } from '../shared/constants/routeConfig';
 
 const MainLayout = () => {
   const [open, setOpen] = useState(false);

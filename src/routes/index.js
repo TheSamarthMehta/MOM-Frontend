@@ -10,7 +10,7 @@ import MeetingManagerPage from "../features/meetings/MeetingManagerPage";
 import AttendancePage from "../features/attendance/AttendancePage";
 import DocumentsManagerPage from "../features/documents/DocumentsManagerPage";
 import ReportsPage from "../features/reports/ReportsPage";
-import { MainLayout } from "../layouts";
+import MainLayout from "../layouts/MainLayout";
 
 const AppRoutes = () => {
   return (
