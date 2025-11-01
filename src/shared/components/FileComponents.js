@@ -1,6 +1,6 @@
 import React from 'react';
 import { File, FileText, Image as ImageIcon } from 'lucide-react';
-import config from '../constants';
+import config from '../constants/constants';
 import { ActionIcons } from './ActionIcons';
 
 // File utility functions

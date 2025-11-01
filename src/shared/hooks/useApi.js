@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { api } from '../utils';
+import { api } from '../utils/api';
 
 /**
  * Custom hook for API operations with loading and error states

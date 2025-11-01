@@ -1,5 +1,5 @@
 import React from 'react';
-import { STATUS_COLORS, ROLE_COLORS } from '../constants';
+import { STATUS_COLORS, ROLE_COLORS } from '../constants/enums';
 
 /**
  * Status Badge Component
