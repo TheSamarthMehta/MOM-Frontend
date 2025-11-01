@@ -5,6 +5,7 @@ export { default as Modal } from './Modal';
 export { default as PageHeader } from './PageHeader';
 export { default as DataTable } from './DataTable';
 export { default as CustomSelect } from './CustomSelect';
+export { StatusBadge, RoleBadge } from './StatusBadge';
 
 // Form Components
 export { 

@@ -1,38 +1,71 @@
 import { getApiUrl, getAuthHeaders } from '../constants';
+import { getErrorMessage } from './errorHandler';
 
-const fetchData = async (endpoint, method = 'GET', body = null) => {
+/**
+ * Centralized API Service
+ * Handles all HTTP requests with consistent error handling
+ */
+const fetchData = async (endpoint, method = 'GET', body = null, options = {}) => {
     const url = getApiUrl(endpoint);
     const headers = {
         'Content-Type': 'application/json',
-        ...getAuthHeaders()
+        ...getAuthHeaders(),
+        ...options.headers,
     };
     
-    const options = {
+    const config = {
         method,
-        headers
+        headers,
     };
     
     if (body) {
-        options.body = JSON.stringify(body);
+        config.body = JSON.stringify(body);
     }
-    
-    const response = await fetch(url, options);
-    const data = await response.json();
-    
-    if (!response.ok) {
-        throw new Error(data.message || 'Request failed');
+
+    try {
+        const response = await fetch(url, config);
+        
+        // Handle non-JSON responses
+        const contentType = response.headers.get('content-type');
+        let data;
+        
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            data = await response.text();
+        }
+        
+        if (!response.ok) {
+            const errorMessage = data?.message || data || `HTTP error! status: ${response.status}`;
+            const error = new Error(errorMessage);
+            error.status = response.status;
+            error.response = { data, status: response.status };
+            throw error;
+        }
+        
+        return data;
+    } catch (error) {
+        // Enhance error with context
+        if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+            throw new Error('Network error. Please check your connection.');
+        }
+        throw error;
     }
-    
-    return data;
 };
 
+/**
+ * Main API object with HTTP methods
+ */
 export const api = {
-    get: (endpoint) => fetchData(endpoint, 'GET'),
-    post: (endpoint, body) => fetchData(endpoint, 'POST', body),
-    put: (endpoint, body) => fetchData(endpoint, 'PUT', body),
-    delete: (endpoint) => fetchData(endpoint, 'DELETE')
+    get: (endpoint, options = {}) => fetchData(endpoint, 'GET', null, options),
+    post: (endpoint, body, options = {}) => fetchData(endpoint, 'POST', body, options),
+    put: (endpoint, body, options = {}) => fetchData(endpoint, 'PUT', body, options),
+    delete: (endpoint, options = {}) => fetchData(endpoint, 'DELETE', null, options),
 };
 
+/**
+ * Auth-specific API methods
+ */
 export const authAPI = {
     login: (credentials) => api.post('/auth/login', credentials),
     register: (userData) => api.post('/auth/register', userData),
@@ -40,5 +73,5 @@ export const authAPI = {
     changePassword: (passwordData) => api.put('/auth/change-password', passwordData),
     logout: () => api.post('/auth/logout'),
     refreshToken: () => api.post('/auth/refresh'),
-    verifyToken: () => api.get('/auth/verify')
+    verifyToken: () => api.get('/auth/verify'),
 };

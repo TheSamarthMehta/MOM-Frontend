@@ -2,3 +2,4 @@
 export { default } from './constants';
 export * from './constants';
 export * from './routeConfig';
+export * from './enums';

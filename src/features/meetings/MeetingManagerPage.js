@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { api } from '../../shared/utils';
-import MeetingService from '../../api/meetingService';
+import React, { useEffect, useState } from "react";
+import { useMeetings } from "./hooks";
+import { useForm } from "../../shared/hooks";
 import { 
   LoadingSpinner, 
   ErrorMessage, 
@@ -11,203 +11,118 @@ import {
   FormSelect, 
   FormTextArea, 
   FormButton,
-  ActionIcons 
-} from '../../shared/components';
+  ActionIcons,
+  StatusBadge
+} from "../../shared/components";
+import { MeetingTransformer } from "../../shared/utils/dataTransformers";
+import { schemas } from "../../shared/utils/validators";
+import { MEETING_STATUS } from "../../shared/constants";
+import { notify } from "../../shared/utils/notifications";
 
 const MeetingManagerPage = () => {
+  const {
+    meetingTypes,
+    loading: apiLoading,
+    error: apiError,
+    fetchAll,
+    saveMeeting,
+    deleteMeeting,
+    modal,
+  } = useMeetings();
+
   const [meetings, setMeetings] = useState([]);
-  const [meetingTypes, setMeetingTypes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [editingMeeting, setEditingMeeting] = useState(null);
-  const [form, setForm] = useState({
+
+  // Form management
+  const initialFormValues = {
     title: "",
-    type: "",
+    type: meetingTypes[0]?.meetingTypeName || "",
     date: "",
     time: "",
     duration: "",
     location: "",
     agenda: "",
-  });
+  };
 
+  const form = useForm(
+    initialFormValues,
+    async (values) => {
+      try {
+        await saveMeeting(values, modal.data);
+        await loadData();
+        modal.close();
+        notify.success(modal.data ? 'Meeting updated successfully' : 'Meeting created successfully');
+      } catch (err) {
+        notify.error(err.message || 'Failed to save meeting');
+      }
+    },
+    schemas.meeting
+  );
 
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  // Load data
+  const loadData = async () => {
     try {
       setLoading(true);
-      const [meetingsResponse, typesResponse] = await Promise.all([
-        api.get('/meetings?limit=50'),
-        api.get('/meeting-types')
-      ]);
-      
-      const transformedMeetings = (meetingsResponse.data || []).map(meeting => {
-        const meetingDate = meeting.meetingDate ? new Date(meeting.meetingDate) : null;
-        const meetingTime = meeting.meetingTime ? new Date(meeting.meetingTime) : null;
-        
-        return {
-          id: meeting._id || meeting.id,
-          title: meeting.meetingTitle,
-          type: meeting.meetingTypeId?.meetingTypeName || meeting.meetingTypeId?.typeName || meeting.type || 'N/A',
-          date: meetingDate ? meetingDate.toISOString().split('T')[0] : '',
-          time: meetingTime ? meetingTime.toTimeString().slice(0, 5) : '',
-          duration: meeting.duration || '',
-          location: meeting.remarks || meeting.location || '',
-          agenda: meeting.meetingDescription || meeting.agenda || '',
-          status: meeting.status || 'Scheduled',
-          meetingTypeId: meeting.meetingTypeId?._id || meeting.meetingTypeId
-        };
-      });
-      
-      setMeetings(transformedMeetings);
-      setMeetingTypes(typesResponse.data || []);
-      setError(null);
+      const { meetings: fetchedMeetings } = await fetchAll();
+      setMeetings(fetchedMeetings || []);
     } catch (err) {
-      console.error('Error:', err);
-      setError('Failed to load data');
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to load meetings:', err);
+      }
+      notify.error('Failed to load meetings');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      // Map local form fields to backend expected payload
-      const buildPayload = async () => {
-        // Ensure meetingTypeId exists: if form.type matches an existing typeName, use its id
-        let meetingTypeId = null;
-        
-        // If editing, try to use the existing meetingTypeId first
-        if (editingMeeting && editingMeeting.meetingTypeId) {
-          meetingTypeId = editingMeeting.meetingTypeId;
-        }
-        
-        // Otherwise find or create the meeting type
-        if (!meetingTypeId) {
-          const existing = meetingTypes.find((t) => 
-            t.typeName === form.type || 
-            t.meetingTypeName === form.type || 
-            t.type === form.type
-          );
-          
-          if (existing) {
-            meetingTypeId = existing.id || existing._id;
-            } else if (form.type) {
-              // Create a new meeting type on the fly
-              try {
-                const created = await api.post('/meeting-types', { 
-                  meetingTypeName: form.type, 
-                  remarks: '' 
-                });
-                const newType = created.data || created;
-                meetingTypeId = newType._id || newType.id;
-                // update local list so UI reflects new type
-                setMeetingTypes((prev) => [...prev, newType]);
-              } catch (err) {
-                console.error('Failed to create meeting type:', err);
-                throw new Error('Failed to create meeting type: ' + err.message);
-              }
-            }
-        }
+  useEffect(() => {
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-        if (!meetingTypeId) {
-          throw new Error('Meeting type is required');
-        }
-
-        // Combine date and time into proper Date objects for backend
-        const meetingDateTime = new Date(`${form.date}T${form.time}`);
-
-        return {
-          meetingDate: meetingDateTime.toISOString(),
-          meetingTime: meetingDateTime.toISOString(),
-          meetingTypeId,
-          meetingTitle: form.title,
-          meetingDescription: form.agenda || '',
-          remarks: form.location || '',
-          status: editingMeeting?.status || 'Scheduled'
-        };
-      };
-
-      const payload = await buildPayload();
-      console.log('Submitting payload:', payload);
-
-      if (editingMeeting) {
-        await api.put(`/meetings/${editingMeeting.id}`, payload);
-      } else {
-        await api.post('/meetings', payload);
-      }
-      fetchData();
-      closeModal();
-    } catch (err) {
-      console.error('Submit error:', err);
-      alert('Failed to save meeting: ' + err.message);
+  // Update form when meeting types change
+  useEffect(() => {
+    if (meetingTypes.length > 0 && !form.values.type) {
+      form.setValue('type', meetingTypes[0].meetingTypeName);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meetingTypes]);
 
+  // Handlers
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this meeting?')) {
       try {
-        await api.delete(`/meetings/${id}`);
-        fetchData();
+        await deleteMeeting(id);
+        await loadData();
+        notify.success('Meeting deleted successfully');
       } catch (err) {
-        alert('Failed to delete meeting');
+        notify.error(err.message || 'Failed to delete meeting');
       }
     }
   };
 
   const openCreateModal = () => {
-    setEditingMeeting(null);
-    setForm({
-      title: "",
-      type: meetingTypes[0]?.meetingTypeName || "",
-      date: "",
-      time: "",
-      duration: "",
-      location: "",
-      agenda: "",
-    });
-    setShowModal(true);
+    form.reset(initialFormValues);
+    modal.open(null);
   };
 
   const openEditModal = (meeting) => {
-    setEditingMeeting(meeting);
-    setForm({
-      title: meeting.title,
-      type: meeting.type,
-      date: meeting.date,
-      time: meeting.time,
-      duration: meeting.duration || "",
-      location: meeting.location || "",
-      agenda: meeting.agenda || "",
-    });
-    setShowModal(true);
+    const formData = MeetingTransformer.toFormFormat(meeting);
+    form.reset(formData);
+    modal.open(meeting);
   };
 
-  const closeModal = () => {
-    setShowModal(false);
-    setEditingMeeting(null);
+  const handleModalClose = () => {
+    modal.close();
+    form.reset(initialFormValues);
   };
 
-  const getStatusClass = (status) => {
-    switch (status) {
-      case 'Completed': return 'badge badge-success';
-      case 'Scheduled': return 'badge badge-info';
-      case 'Cancelled': return 'badge badge-danger';
-      default: return 'badge';
-    }
-  };
-
-  if (loading) {
+  if (loading || apiLoading) {
     return <LoadingSpinner text="Loading meetings..." fullScreen />;
   }
 
-  if (error) {
-    return <ErrorMessage error={error} onRetry={fetchData} />;
+  if (apiError) {
+    return <ErrorMessage error={apiError} onRetry={loadData} />;
   }
 
   const createButton = (
@@ -267,16 +182,7 @@ const MeetingManagerPage = () => {
     {
       key: 'status',
       header: 'Status',
-      render: (value) => (
-        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-          value === 'Completed' ? 'bg-green-100 text-green-800' :
-          value === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
-          value === 'Cancelled' ? 'bg-red-100 text-red-800' :
-          'bg-gray-100 text-gray-800'
-        }`}>
-          {value}
-        </span>
-      )
+      render: (value) => <StatusBadge status={value || MEETING_STATUS.SCHEDULED} />
     },
     {
       key: 'actions',
@@ -310,84 +216,97 @@ const MeetingManagerPage = () => {
       />
 
       <Modal
-        isOpen={showModal}
-        onClose={closeModal}
-        title={editingMeeting ? 'Edit Meeting' : 'Create Meeting'}
+        isOpen={modal.isOpen}
+        onClose={handleModalClose}
+        title={modal.data ? 'Edit Meeting' : 'Create Meeting'}
         size="lg"
       >
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={form.handleSubmit} className="space-y-6">
           <FormInput
             label="Title"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            value={form.values.title}
+            onChange={(e) => form.handleChange('title', e.target.value)}
+            onBlur={() => form.handleBlur('title')}
             placeholder="Enter meeting title"
             required
+            error={form.touched.title && form.errors.title}
           />
           
           <FormSelect
             label="Type"
-            value={form.type}
-            onChange={(e) => setForm({ ...form, type: e.target.value })}
+            value={form.values.type}
+            onChange={(e) => form.handleChange('type', e.target.value)}
+            onBlur={() => form.handleBlur('type')}
             options={meetingTypes.map(type => ({
               value: type.meetingTypeName,
               label: type.meetingTypeName
             }))}
             placeholder="Select type"
             required
+            error={form.touched.type && form.errors.type}
           />
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormInput
               label="Date"
               type="date"
-              value={form.date}
-              onChange={(e) => setForm({ ...form, date: e.target.value })}
+              value={form.values.date}
+              onChange={(e) => form.handleChange('date', e.target.value)}
+              onBlur={() => form.handleBlur('date')}
               required
+              error={form.touched.date && form.errors.date}
             />
             
             <FormInput
               label="Time"
               type="time"
-              value={form.time}
-              onChange={(e) => setForm({ ...form, time: e.target.value })}
+              value={form.values.time}
+              onChange={(e) => form.handleChange('time', e.target.value)}
+              onBlur={() => form.handleBlur('time')}
               required
+              error={form.touched.time && form.errors.time}
             />
           </div>
           
           <FormInput
             label="Duration (minutes)"
             type="number"
-            value={form.duration}
-            onChange={(e) => setForm({ ...form, duration: e.target.value })}
+            value={form.values.duration}
+            onChange={(e) => form.handleChange('duration', e.target.value)}
             placeholder="e.g., 60"
           />
           
           <FormInput
             label="Location"
-            value={form.location}
-            onChange={(e) => setForm({ ...form, location: e.target.value })}
+            value={form.values.location}
+            onChange={(e) => form.handleChange('location', e.target.value)}
             placeholder="Meeting location"
           />
           
           <FormTextArea
             label="Agenda"
-            value={form.agenda}
-            onChange={(e) => setForm({ ...form, agenda: e.target.value })}
+            value={form.values.agenda}
+            onChange={(e) => form.handleChange('agenda', e.target.value)}
             placeholder="Meeting agenda"
             rows={4}
           />
+
+          {form.errors._submit && (
+            <div className="text-red-600 text-sm">{form.errors._submit}</div>
+          )}
           
           <div className="flex gap-3 pt-4">
             <FormButton
               type="submit"
               className="flex-1"
+              loading={form.isSubmitting}
             >
-              {editingMeeting ? 'Update Meeting' : 'Create Meeting'}
+              {modal.data ? 'Update Meeting' : 'Create Meeting'}
             </FormButton>
             <FormButton
               type="button"
               variant="secondary"
-              onClick={closeModal}
+              onClick={handleModalClose}
               className="flex-1"
             >
               Cancel

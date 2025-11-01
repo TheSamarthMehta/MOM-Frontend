@@ -1,6 +1,6 @@
-﻿import React, { useState, useEffect } from "react";
-import { api } from '../../shared/utils';
-import StaffService from '../../api/staffService';
+﻿import React, { useEffect, useState } from "react";
+import { useStaff } from "./hooks";
+import { useForm } from "../../shared/hooks";
 import { 
   LoadingSpinner, 
   ErrorMessage, 
@@ -10,104 +10,113 @@ import {
   FormInput, 
   FormSelect, 
   FormButton,
-  ActionIcons 
-} from '../../shared/components';
+  ActionIcons,
+  RoleBadge
+} from "../../shared/components";
+import { StaffTransformer } from "../../shared/utils/dataTransformers";
+import { schemas } from "../../shared/utils/validators";
+import { USER_ROLES } from "../../shared/constants";
+import { notify } from "../../shared/utils/notifications";
 
 const StaffConfigPage = () => {
+  const {
+    loading: apiLoading,
+    error: apiError,
+    fetchStaff,
+    saveStaff,
+    deleteStaff,
+    modal,
+  } = useStaff();
+
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [editingStaff, setEditingStaff] = useState(null);
-  const [form, setForm] = useState({
+
+  // Form management
+  const initialFormValues = {
     staffName: "",
     emailAddress: "",
     mobileNo: "",
-    role: "Staff",
+    role: USER_ROLES.STAFF,
     department: "",
-  });
+  };
 
+  const form = useForm(
+    initialFormValues,
+    async (values) => {
+      try {
+        await saveStaff(values, modal.data);
+        await loadData();
+        modal.close();
+        notify.success(modal.data ? 'Staff member updated successfully' : 'Staff member added successfully');
+      } catch (err) {
+        notify.error(err.message || 'Failed to save staff');
+      }
+    },
+    schemas.staff
+  );
 
-
-  useEffect(() => {
-    fetchStaff();
-  }, []);
-
-  const fetchStaff = async () => {
+  // Load data
+  const loadData = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/staff');
-      setStaff(response.data || []);
-      setError(null);
+      const fetchedStaff = await fetchStaff();
+      setStaff(fetchedStaff || []);
     } catch (err) {
-      console.error('Error:', err);
-      setError('Failed to load staff data');
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to load staff:', err);
+      }
+      notify.error('Failed to load staff data');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (editingStaff) {
-        await api.put(`/staff/${editingStaff.id}`, form);
-      } else {
-        await api.post('/staff', form);
-      }
-      fetchStaff();
-      closeModal();
-    } catch (err) {
-      alert('Failed to save staff: ' + err.message);
-    }
-  };
+  useEffect(() => {
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // Handlers
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this staff member?')) {
       try {
-        await api.delete(`/staff/${id}`);
-        fetchStaff();
+        await deleteStaff(id);
+        await loadData();
+        notify.success('Staff member deleted successfully');
       } catch (err) {
-        alert('Failed to delete staff');
+        notify.error(err.message || 'Failed to delete staff');
       }
     }
   };
 
   const openCreateModal = () => {
-    setEditingStaff(null);
-    setForm({
-      staffName: "",
-      emailAddress: "",
-      mobileNo: "",
-      role: "Staff",
-      department: "",
-    });
-    setShowModal(true);
+    form.reset(initialFormValues);
+    modal.open(null);
   };
 
   const openEditModal = (staffMember) => {
-    setEditingStaff(staffMember);
-    setForm({
+    const formData = {
       staffName: staffMember.staffName,
       emailAddress: staffMember.emailAddress,
       mobileNo: staffMember.mobileNo,
       role: staffMember.role,
-      department: staffMember.department,
-    });
-    setShowModal(true);
+      department: staffMember.department || "",
+    };
+    form.reset(formData);
+    modal.open(staffMember);
   };
 
-  const closeModal = () => {
-    setShowModal(false);
-    setEditingStaff(null);
+  const handleModalClose = () => {
+    modal.close();
+    form.reset(initialFormValues);
   };
 
-  if (loading) {
+  if (loading || apiLoading) {
     return <LoadingSpinner text="Loading staff data..." fullScreen />;
   }
 
-  if (error) {
-    return <ErrorMessage error={error} onRetry={fetchStaff} />;
+  if (apiError) {
+    return <ErrorMessage error={apiError} onRetry={loadData} />;
   }
 
   const addButton = (
@@ -148,15 +157,7 @@ const StaffConfigPage = () => {
     {
       key: 'role',
       header: 'Role',
-      render: (value) => (
-        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-          value === 'Admin' ? 'bg-red-100 text-red-800' :
-          value === 'Convener' ? 'bg-blue-100 text-blue-800' :
-          'bg-green-100 text-green-800'
-        }`}>
-          {value}
-        </span>
-      )
+      render: (value) => <RoleBadge role={value || USER_ROLES.STAFF} />
     },
     {
       key: 'department',
@@ -195,68 +196,81 @@ const StaffConfigPage = () => {
       />
 
       <Modal
-        isOpen={showModal}
-        onClose={closeModal}
-        title={editingStaff ? 'Edit Staff Member' : 'Add Staff Member'}
+        isOpen={modal.isOpen}
+        onClose={handleModalClose}
+        title={modal.data ? 'Edit Staff Member' : 'Add Staff Member'}
         size="md"
       >
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={form.handleSubmit} className="space-y-6">
           <FormInput
             label="Name"
-            value={form.staffName}
-            onChange={(e) => setForm({ ...form, staffName: e.target.value })}
+            value={form.values.staffName}
+            onChange={(e) => form.handleChange('staffName', e.target.value)}
+            onBlur={() => form.handleBlur('staffName')}
             placeholder="Enter full name"
             required
+            error={form.touched.staffName && form.errors.staffName}
           />
           
           <FormInput
             label="Email"
             type="email"
-            value={form.emailAddress}
-            onChange={(e) => setForm({ ...form, emailAddress: e.target.value })}
+            value={form.values.emailAddress}
+            onChange={(e) => form.handleChange('emailAddress', e.target.value)}
+            onBlur={() => form.handleBlur('emailAddress')}
             placeholder="Enter email address"
             required
+            error={form.touched.emailAddress && form.errors.emailAddress}
           />
           
           <FormInput
             label="Mobile"
             type="tel"
-            value={form.mobileNo}
-            onChange={(e) => setForm({ ...form, mobileNo: e.target.value })}
+            value={form.values.mobileNo}
+            onChange={(e) => form.handleChange('mobileNo', e.target.value)}
+            onBlur={() => form.handleBlur('mobileNo')}
             placeholder="Enter mobile number"
             required
+            error={form.touched.mobileNo && form.errors.mobileNo}
           />
           
           <FormSelect
             label="Role"
-            value={form.role}
-            onChange={(e) => setForm({ ...form, role: e.target.value })}
+            value={form.values.role}
+            onChange={(e) => form.handleChange('role', e.target.value)}
+            onBlur={() => form.handleBlur('role')}
             options={[
-              { value: 'Admin', label: 'Admin' },
-              { value: 'Convener', label: 'Convener' },
-              { value: 'Staff', label: 'Staff' }
+              { value: USER_ROLES.ADMIN, label: USER_ROLES.ADMIN },
+              { value: USER_ROLES.CONVENER, label: USER_ROLES.CONVENER },
+              { value: USER_ROLES.STAFF, label: USER_ROLES.STAFF }
             ]}
             required
+            error={form.touched.role && form.errors.role}
           />
           
           <FormInput
             label="Department"
-            value={form.department}
-            onChange={(e) => setForm({ ...form, department: e.target.value })}
+            value={form.values.department}
+            onChange={(e) => form.handleChange('department', e.target.value)}
             placeholder="e.g., IT, HR, Finance"
           />
+
+          {form.errors._submit && (
+            <div className="text-red-600 text-sm">{form.errors._submit}</div>
+          )}
           
           <div className="flex gap-3 pt-4">
             <FormButton
               type="submit"
               className="flex-1"
+              loading={form.isSubmitting}
             >
-              {editingStaff ? 'Update Staff' : 'Add Staff'}
+              {modal.data ? 'Update Staff' : 'Add Staff'}
             </FormButton>
             <FormButton
               type="button"
               variant="secondary"
-              onClick={closeModal}
+              onClick={handleModalClose}
               className="flex-1"
             >
               Cancel
