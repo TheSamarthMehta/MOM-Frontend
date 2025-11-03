@@ -5,15 +5,11 @@ import { api } from '../../../shared/utils/api';
 import { MeetingTransformer } from '../../../shared/utils/dataTransformers';
 import { handleApiError } from '../../../shared/utils/errorHandler';
 
-/**
- * Custom hook for managing meetings
- */
 export const useMeetings = () => {
   const [meetingTypes, setMeetingTypes] = useState([]);
   const apiHook = useApi();
   const modal = useModal();
 
-  // Fetch meetings
   const fetchMeetings = useCallback(async () => {
     try {
       const response = await api.get('/meetings?limit=50');
@@ -23,7 +19,6 @@ export const useMeetings = () => {
     }
   }, []);
 
-  // Fetch meeting types
   const fetchMeetingTypes = useCallback(async () => {
     try {
       const response = await api.get('/meeting-types');
@@ -35,7 +30,6 @@ export const useMeetings = () => {
     }
   }, []);
 
-  // Fetch both meetings and types
   const fetchAll = useCallback(async () => {
     try {
       const [meetings, types] = await Promise.all([
@@ -48,11 +42,9 @@ export const useMeetings = () => {
     }
   }, [fetchMeetings, fetchMeetingTypes]);
 
-  // Create or find meeting type
   const ensureMeetingType = useCallback(async (typeName) => {
     if (!typeName) throw new Error('Meeting type is required');
 
-    // Find existing type
     const existing = meetingTypes.find(
       (t) => t.meetingTypeName === typeName || 
              t.typeName === typeName ||
@@ -63,7 +55,6 @@ export const useMeetings = () => {
       return existing._id || existing.id;
     }
 
-    // Create new type
     try {
       const response = await api.post('/meeting-types', {
         meetingTypeName: typeName,
@@ -81,7 +72,6 @@ export const useMeetings = () => {
     }
   }, [meetingTypes]);
 
-  // Save meeting (create or update)
   const saveMeeting = useCallback(async (formData, editingMeeting = null) => {
     try {
       const meetingTypeId = await ensureMeetingType(formData.type);
@@ -100,7 +90,6 @@ export const useMeetings = () => {
     }
   }, [ensureMeetingType, apiHook]);
 
-  // Delete meeting
   const deleteMeeting = useCallback(async (id) => {
     try {
       await apiHook.delete(`/meetings/${id}`);

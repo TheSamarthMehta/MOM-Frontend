@@ -3,7 +3,6 @@ import { File, FileText, Image as ImageIcon } from 'lucide-react';
 import config from '../constants/constants';
 import { ActionIcons } from './ActionIcons';
 
-// File utility functions
 export const formatFileSize = (bytes) => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -37,7 +36,6 @@ export const getFileIcon = (type, size = 20) => {
   }
 };
 
-// File upload component
 export const FileUpload = ({ 
   onFileSelect, 
   accept = config.ALLOWED_FILE_TYPES.join(','),
@@ -67,7 +65,6 @@ export const FileUpload = ({
   );
 };
 
-// File actions component
 export const FileActions = ({ 
   onView, 
   onDownload, 

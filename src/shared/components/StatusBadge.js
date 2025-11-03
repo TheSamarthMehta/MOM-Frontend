@@ -1,10 +1,6 @@
 import React from 'react';
 import { STATUS_COLORS, ROLE_COLORS } from '../constants/enums';
 
-/**
- * Status Badge Component
- * Displays a status badge with appropriate styling
- */
 export const StatusBadge = ({ status, className = '' }) => {
   const statusConfig = STATUS_COLORS[status] || STATUS_COLORS.Scheduled;
 
@@ -15,10 +11,6 @@ export const StatusBadge = ({ status, className = '' }) => {
   );
 };
 
-/**
- * Role Badge Component
- * Displays a role badge with appropriate styling
- */
 export const RoleBadge = ({ role, className = '' }) => {
   const roleConfig = ROLE_COLORS[role] || ROLE_COLORS.Staff;
 

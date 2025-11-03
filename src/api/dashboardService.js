@@ -1,8 +1,6 @@
 import { api } from '../shared/utils/api';
 
-// Dashboard Service - Handles dashboard-related operations
 export class DashboardService {
-  // Fetch dashboard data
   static async fetchDashboardData() {
     try {
       const [dashboardResponse, meetingsResponse] = await Promise.all([
@@ -41,7 +39,6 @@ export class DashboardService {
     }
   }
 
-  // Get status badge class
   static getStatusBadge(status) {
     const baseClasses = "inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold";
     switch (status) {

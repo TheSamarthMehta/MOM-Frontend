@@ -5,14 +5,10 @@ import { api } from '../../../shared/utils/api';
 import { StaffTransformer } from '../../../shared/utils/dataTransformers';
 import { handleApiError } from '../../../shared/utils/errorHandler';
 
-/**
- * Custom hook for managing staff
- */
 export const useStaff = () => {
   const apiHook = useApi();
   const modal = useModal();
 
-  // Fetch all staff
   const fetchStaff = useCallback(async () => {
     try {
       const response = await api.get('/staff');
@@ -22,7 +18,6 @@ export const useStaff = () => {
     }
   }, []);
 
-  // Save staff (create or update)
   const saveStaff = useCallback(async (formData, editingStaff = null) => {
     try {
       const payload = StaffTransformer.toAPIFormat(formData);
@@ -39,7 +34,6 @@ export const useStaff = () => {
     }
   }, [apiHook]);
 
-  // Delete staff
   const deleteStaff = useCallback(async (id) => {
     try {
       await apiHook.delete(`/staff/${id}`);

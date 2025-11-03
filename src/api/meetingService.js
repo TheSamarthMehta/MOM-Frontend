@@ -1,8 +1,6 @@
 import { api } from '../shared/utils/api';
 
-// Meeting Service - Handles all meeting-related operations
 export class MeetingService {
-  // Fetch meetings with types
   static async fetchMeetingsAndTypes() {
     try {
       const [meetingsResponse, typesResponse] = await Promise.all([
@@ -38,10 +36,8 @@ export class MeetingService {
     }
   }
 
-  // Create or update meeting
   static async saveMeeting(form, editingMeeting, meetingTypes) {
     try {
-      // Ensure meetingTypeId exists
       let meetingTypeId = null;
       
       if (editingMeeting && editingMeeting.meetingTypeId) {
@@ -56,7 +52,6 @@ export class MeetingService {
         if (existing) {
           meetingTypeId = existing.id || existing._id;
         } else if (form.type) {
-          // Create a new meeting type on the fly
           try {
             const created = await api.post('/meeting-types', { 
               meetingTypeName: form.type, 
@@ -75,7 +70,6 @@ export class MeetingService {
         throw new Error('Meeting type is required');
       }
 
-      // Combine date and time into proper Date objects for backend
       const meetingDateTime = new Date(`${form.date}T${form.time}`);
 
       const payload = {
@@ -102,7 +96,6 @@ export class MeetingService {
     }
   }
 
-  // Delete meeting
   static async deleteMeeting(id) {
     if (window.confirm('Are you sure you want to delete this meeting?')) {
       try {
@@ -116,7 +109,6 @@ export class MeetingService {
     return false;
   }
 
-  // Get status badge class
   static getStatusClass(status) {
     switch (status) {
       case 'Completed': return 'badge badge-success';
@@ -126,7 +118,6 @@ export class MeetingService {
     }
   }
 
-  // Transform meeting for form
   static transformMeetingForForm(meeting) {
     return {
       title: meeting.title,
@@ -139,7 +130,6 @@ export class MeetingService {
     };
   }
 
-  // Get default form values
   static getDefaultForm(meetingTypes) {
     return {
       title: "",

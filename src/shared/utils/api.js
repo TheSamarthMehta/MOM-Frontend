@@ -1,10 +1,6 @@
 import { getApiUrl, getAuthHeaders } from '../constants/constants';
 import { getErrorMessage } from './errorHandler';
 
-/**
- * Centralized API Service
- * Handles all HTTP requests with consistent error handling
- */
 const fetchData = async (endpoint, method = 'GET', body = null, options = {}) => {
     const url = getApiUrl(endpoint);
     const headers = {
@@ -25,7 +21,6 @@ const fetchData = async (endpoint, method = 'GET', body = null, options = {}) =>
     try {
         const response = await fetch(url, config);
         
-        // Handle non-JSON responses
         const contentType = response.headers.get('content-type');
         let data;
         
@@ -45,7 +40,6 @@ const fetchData = async (endpoint, method = 'GET', body = null, options = {}) =>
         
         return data;
     } catch (error) {
-        // Enhance error with context
         if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
             throw new Error('Network error. Please check your connection.');
         }
@@ -53,9 +47,6 @@ const fetchData = async (endpoint, method = 'GET', body = null, options = {}) =>
     }
 };
 
-/**
- * Main API object with HTTP methods
- */
 export const api = {
     get: (endpoint, options = {}) => fetchData(endpoint, 'GET', null, options),
     post: (endpoint, body, options = {}) => fetchData(endpoint, 'POST', body, options),
@@ -63,9 +54,6 @@ export const api = {
     delete: (endpoint, options = {}) => fetchData(endpoint, 'DELETE', null, options),
 };
 
-/**
- * Auth-specific API methods
- */
 export const authAPI = {
     login: (credentials) => api.post('/auth/login', credentials),
     register: (userData) => api.post('/auth/register', userData),

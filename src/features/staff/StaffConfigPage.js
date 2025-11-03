@@ -27,7 +27,6 @@ const StaffConfigPage = () => {
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Form management
   const initialFormValues = {
     staffName: "",
     emailAddress: "",
@@ -51,7 +50,6 @@ const StaffConfigPage = () => {
     schemas.staff
   );
 
-  // Load data
   const loadData = async () => {
     try {
       setLoading(true);
@@ -69,10 +67,8 @@ const StaffConfigPage = () => {
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Handlers
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this staff member?')) {
       try {

@@ -1,9 +1,7 @@
 import React from 'react';
 import { Edit3, Trash2, Eye, Download, Plus, Search, RefreshCw } from 'lucide-react';
 
-// Action Icons Component - Consistent icons throughout the application
 export const ActionIcons = {
-  // Edit Icon - Green outline
   Edit: ({ size = 18, className = '', onClick, title = 'Edit' }) => (
     <button
       onClick={onClick}
@@ -14,7 +12,6 @@ export const ActionIcons = {
     </button>
   ),
 
-  // Delete Icon - Red outline
   Delete: ({ size = 18, className = '', onClick, title = 'Delete' }) => (
     <button
       onClick={onClick}
@@ -25,7 +22,6 @@ export const ActionIcons = {
     </button>
   ),
 
-  // View Icon - Blue outline
   View: ({ size = 18, className = '', onClick, title = 'View' }) => (
     <button
       onClick={onClick}
@@ -36,7 +32,6 @@ export const ActionIcons = {
     </button>
   ),
 
-  // Download Icon - Green outline
   Download: ({ size = 18, className = '', onClick, title = 'Download' }) => (
     <button
       onClick={onClick}
@@ -47,7 +42,6 @@ export const ActionIcons = {
     </button>
   ),
 
-  // Add/Plus Icon - Blue outline
   Add: ({ size = 18, className = '', onClick, title = 'Add' }) => (
     <button
       onClick={onClick}
@@ -58,7 +52,6 @@ export const ActionIcons = {
     </button>
   ),
 
-  // Search Icon - Gray outline
   Search: ({ size = 18, className = '', onClick, title = 'Search' }) => (
     <button
       onClick={onClick}
@@ -69,7 +62,6 @@ export const ActionIcons = {
     </button>
   ),
 
-  // Refresh Icon - Blue outline
   Refresh: ({ size = 18, className = '', onClick, title = 'Refresh' }) => (
     <button
       onClick={onClick}
@@ -81,9 +73,7 @@ export const ActionIcons = {
   )
 };
 
-// Action Button Groups - Common combinations
 export const ActionGroups = {
-  // Edit and Delete buttons
   EditDelete: ({ onEdit, onDelete, editTitle = 'Edit', deleteTitle = 'Delete', className = '' }) => (
     <div className={`flex items-center gap-2 ${className}`}>
       <ActionIcons.Edit onClick={onEdit} title={editTitle} />
@@ -91,7 +81,6 @@ export const ActionGroups = {
     </div>
   ),
 
-  // View, Download, and Delete buttons
   ViewDownloadDelete: ({ onView, onDownload, onDelete, className = '' }) => (
     <div className={`flex items-center gap-2 ${className}`}>
       <ActionIcons.View onClick={onView} title="View" />
@@ -100,7 +89,6 @@ export const ActionGroups = {
     </div>
   ),
 
-  // View and Download buttons
   ViewDownload: ({ onView, onDownload, className = '' }) => (
     <div className={`flex items-center gap-2 ${className}`}>
       <ActionIcons.View onClick={onView} title="View" />
@@ -109,7 +97,6 @@ export const ActionGroups = {
   )
 };
 
-// Icon Button with Text - For larger buttons
 export const IconButton = ({ 
   icon, 
   text, 

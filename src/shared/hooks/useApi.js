@@ -1,10 +1,6 @@
 import { useState, useCallback } from 'react';
 import { api } from '../utils/api';
 
-/**
- * Custom hook for API operations with loading and error states
- * @returns {Object} API methods with built-in state management
- */
 export const useApi = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -28,7 +24,6 @@ export const useApi = () => {
       if (options.onError) {
         options.onError(err);
       } else if (options.showError !== false && process.env.NODE_ENV === 'development') {
-        // Only log in development mode
         console.error('API Error:', errorMessage);
       }
 

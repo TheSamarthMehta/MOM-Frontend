@@ -1,12 +1,10 @@
 import { getApiUrl, getAuthHeaders, getFileUploadUrl, API_ENDPOINTS } from '../shared/constants/constants';
 
-// Enhanced API service with centralized configuration
 class ApiService {
   constructor() {
     this.baseURL = getApiUrl('');
   }
 
-  // Generic request method
   async request(endpoint, options = {}) {
     const url = getApiUrl(endpoint);
     const defaultHeaders = {
@@ -29,7 +27,6 @@ class ApiService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Handle different response types
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         return await response.json();
@@ -42,7 +39,6 @@ class ApiService {
     }
   }
 
-  // HTTP Methods
   async get(endpoint, options = {}) {
     return this.request(endpoint, { ...options, method: 'GET' });
   }
@@ -67,7 +63,6 @@ class ApiService {
     return this.request(endpoint, { ...options, method: 'DELETE' });
   }
 
-  // File Upload Methods
   async uploadFile(documentId, file) {
     const url = getFileUploadUrl(documentId);
     const formData = new FormData();
@@ -113,7 +108,6 @@ class ApiService {
   }
 }
 
-// Create singleton instance
 const apiService = new ApiService();
 
 export default apiService;

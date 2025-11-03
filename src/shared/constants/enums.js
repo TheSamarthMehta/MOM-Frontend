@@ -1,8 +1,3 @@
-/**
- * Application Enums and Constants
- * Centralized definitions for status, roles, and other enum-like values
- */
-
 export const MEETING_STATUS = {
   SCHEDULED: 'Scheduled',
   COMPLETED: 'Completed',

@@ -2,9 +2,7 @@ import { api } from '../shared/utils/api';
 import apiService from './apiService';
 import { getFileType } from '../shared/components/FileComponents';
 
-// Document Service - Handles all document-related operations
 export class DocumentService {
-  // Fetch all documents for meetings
   static async fetchAllDocuments(meetings) {
     const allDocuments = [];
     
@@ -18,7 +16,6 @@ export class DocumentService {
         }));
         allDocuments.push(...meetingDocs);
       } catch (err) {
-        // Skip failed document fetches
         console.warn(`Failed to fetch documents for meeting ${meeting._id}:`, err);
       }
     }
@@ -26,7 +23,6 @@ export class DocumentService {
     return allDocuments;
   }
 
-  // Delete a document
   static async deleteDocument(doc) {
     if (window.confirm(`Are you sure you want to delete "${doc.documentName}"?`)) {
       try {

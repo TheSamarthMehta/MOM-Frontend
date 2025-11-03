@@ -28,7 +28,6 @@ const MeetingManagerPage = () => {
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Form management
   const initialFormValues = {
     title: "",
     type: meetingTypes[0]?.meetingTypeName || "",
@@ -54,7 +53,6 @@ const MeetingManagerPage = () => {
     schemas.meeting
   );
 
-  // Load data
   const loadData = async () => {
     try {
       setLoading(true);
@@ -72,18 +70,14 @@ const MeetingManagerPage = () => {
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update form when meeting types change
   useEffect(() => {
     if (meetingTypes.length > 0 && !form.values.type) {
       form.setValue('type', meetingTypes[0].meetingTypeName);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meetingTypes]);
 
-  // Handlers
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this meeting?')) {
       try {

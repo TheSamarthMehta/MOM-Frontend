@@ -74,7 +74,6 @@ const DocumentsManagerPage = () => {
         setShowUploadModal(false);
       }
     } catch (err) {
-      // Error already handled in service
     } finally {
       setLoading(false);
     }
