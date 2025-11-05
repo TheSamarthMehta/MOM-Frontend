@@ -9,7 +9,7 @@ import DataTable from '../../shared/components/DataTable';
 import { FormSelect, FormButton } from '../../shared/components/FormComponents';
 import { formatFileSize, getFileType, getFileIcon, FileUpload, FileActions } from '../../shared/components/FileComponents';
 import { ActionIcons } from '../../shared/components/ActionIcons';
-import { useDocumentsManager } from './DocumentsManagerHandler';
+import { useDocuments } from './hooks/useDocuments';
 
 const DocumentsManagerPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,7 +30,7 @@ const DocumentsManagerPage = () => {
     handleView,
     handleDownload,
     handleUpload
-  } = useDocumentsManager();
+  } = useDocuments();
 
   const filteredDocs = DocumentService.filterDocuments(documents, searchQuery, filterType);
 

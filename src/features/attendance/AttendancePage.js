@@ -1,119 +1,26 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { UserCheck, UserX, Users, ToggleLeft, ToggleRight, Trash2 } from "lucide-react";
-import { api } from '../../shared/utils/api';
+import { useAttendance } from './hooks/useAttendance';
 
 const AttendancePage = () => {
-  const [selectedMeeting, setSelectedMeeting] = useState(null);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showMarkModal, setShowMarkModal] = useState(false);
-  const [participants, setParticipants] = useState([]);
-  const [meetings, setMeetings] = useState([]);
-  const [staff, setStaff] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [newMember, setNewMember] = useState({ staffId: "", role: "Staff" });
-
-
-  
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const [meetingsResponse, staffResponse] = await Promise.all([
-          api.get('/meetings?limit=50'),
-          api.get('/staff')
-        ]);
-        
-        setMeetings(meetingsResponse.data || []);
-        setStaff(staffResponse.data || []);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError(err.message || 'Failed to load data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    if (selectedMeeting) {
-      const fetchParticipants = async () => {
-        try {
-          setLoading(true);
-          const response = await api.get(`/meetings/${selectedMeeting._id}/members`);
-          setParticipants(response.data || []);
-        } catch (err) {
-          console.error('Error fetching participants:', err);
-          setError(err.message || 'Failed to load participants');
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      fetchParticipants();
-    }
-  }, [selectedMeeting]);
-
-  const handleToggleAttendance = async (participantId) => {
-    try {
-      const participant = participants.find(p => p._id === participantId);
-      if (!participant) return;
-
-      const newStatus = !participant.isPresent;
-      await api.put(`/meeting-members/${participantId}/attendance`, { isPresent: newStatus });
-      
-      setParticipants((prev) =>
-        prev.map((p) =>
-          p._id === participantId
-            ? { ...p, isPresent: newStatus }
-            : p
-        )
-      );
-    } catch (err) {
-      console.error('Error updating attendance:', err);
-      alert(err.message || 'Failed to update attendance');
-    }
-  };
-
-  const handleAddMember = async (e) => {
-    e.preventDefault();
-    if (!newMember.staffId) {
-      alert("Please select a staff member.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await api.post(`/meetings/${selectedMeeting._id}/members`, newMember);
-      setParticipants((prev) => [response.data, ...prev]);
-      setNewMember({ staffId: "", role: "Staff" });
-      setShowAddModal(false);
-    } catch (err) {
-      console.error('Error adding member:', err);
-      alert(err.message || 'Failed to add member');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRemoveMember = async (participantId) => {
-    if (window.confirm("Are you sure you want to remove this member?")) {
-      try {
-        setLoading(true);
-        await api.delete(`/meeting-members/${participantId}`);
-        setParticipants((prev) => prev.filter((p) => p._id !== participantId));
-      } catch (err) {
-        console.error('Error removing member:', err);
-        alert(err.message || 'Failed to remove member');
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
+  const {
+    selectedMeeting,
+    showAddModal,
+    showMarkModal,
+    participants,
+    meetings,
+    staff,
+    loading,
+    error,
+    newMember,
+    setSelectedMeeting,
+    setShowAddModal,
+    setShowMarkModal,
+    setNewMember,
+    handleToggleAttendance,
+    handleAddMember,
+    handleRemoveMember,
+  } = useAttendance();
 
   const stats = [
     { label: "Total Participants", value: participants.length, icon: Users, color: "blue" },

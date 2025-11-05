@@ -1,88 +1,20 @@
-import React, { useState, useEffect } from "react";
-import { useAuth } from '../auth/AuthContext';
+import React from "react";
+import { useProfile } from './hooks/useProfile';
 
 const ProfilePage = () => {
-  const { user: authUser, updateProfile, changePassword, loading, error, clearError } = useAuth();
-  const [user, setUser] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    mobileNo: "",
-    role: ""
-  });
-
-  const [passwords, setPasswords] = useState({
-    current: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-
-  const [isEditing, setIsEditing] = useState(false);
-  const [success, setSuccess] = useState(null);
-
-  useEffect(() => {
-    if (authUser) {
-      setUser({
-        firstName: authUser.firstName || "",
-        lastName: authUser.lastName || "",
-        email: authUser.email || "",
-        mobileNo: authUser.mobileNo || "",
-        role: authUser.role || ""
-      });
-    }
-  }, [authUser]);
-
-  const handleUserChange = (e) => {
-    const { name, value } = e.target;
-    if (name === "mobileNo") {
-      const numericValue = value.replace(/[^0-9]/g, "");
-      if (numericValue.length <= 10) {
-        setUser({ ...user, [name]: numericValue });
-      }
-    } else {
-      setUser({ ...user, [name]: value });
-    }
-  };
-
-  const handlePasswordChange = (e) => {
-    setPasswords({ ...passwords, [e.target.name]: e.target.value });
-  };
-
-  const handleSaveChanges = async (e) => {
-    e.preventDefault();
-    clearError();
-    setSuccess(null);
-
-    try {
-      const profileData = {
-        firstName: user.firstName,
-        lastName: user.lastName,
-        mobileNo: user.mobileNo,
-      };
-      
-      await updateProfile(profileData);
-      
-      if (passwords.newPassword) {
-        if (passwords.newPassword !== passwords.confirmPassword) {
-          setSuccess("New passwords do not match.");
-          return;
-        }
-        
-        await changePassword({
-          currentPassword: passwords.current,
-          newPassword: passwords.newPassword,
-        });
-        setSuccess("Profile and password updated successfully.");
-      } else {
-        setSuccess("Profile updated successfully.");
-      }
-      
-      setIsEditing(false);
-      setPasswords({ current: "", newPassword: "", confirmPassword: "" });
-    } catch (err) {
-      console.error('Error updating profile:', err);
-    }
-  };
+  const {
+    user,
+    passwords,
+    isEditing,
+    success,
+    loading,
+    error,
+    handleUserChange,
+    handlePasswordChange,
+    handleSaveChanges,
+    handleEditClick,
+    handleCancelEdit,
+  } = useProfile();
 
   if (loading && !user.email) {
     return (
@@ -116,7 +48,7 @@ const ProfilePage = () => {
         <h1 style={{ fontSize: '28px', fontWeight: '600', color: '#1a1a1a' }}>Profile Settings</h1>
         {!isEditing ? (
           <button
-            onClick={() => setIsEditing(true)}
+            onClick={handleEditClick}
             disabled={loading}
             style={{ 
               padding: '10px 20px', 
@@ -133,7 +65,7 @@ const ProfilePage = () => {
         ) : (
           <div style={{ display: 'flex', gap: '10px' }}>
             <button
-              onClick={() => setIsEditing(false)}
+              onClick={handleCancelEdit}
               disabled={loading}
               style={{ 
                 padding: '10px 20px', 
