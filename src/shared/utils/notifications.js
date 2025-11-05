@@ -1,15 +1,4 @@
-/**
- * Notification Utilities
- * Provides user-friendly notifications instead of browser alerts
- */
-
-/**
- * Show a notification to the user
- * This is a simple implementation - can be replaced with toast library (react-hot-toast, react-toastify, etc.)
- */
 export const showNotification = (message, type = 'info') => {
-  // For now, use a simple approach that doesn't require additional dependencies
-  // In production, replace with a proper toast notification library
   const notification = document.createElement('div');
   notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transition-all duration-300 ${
     type === 'error' ? 'bg-red-500 text-white' :
