@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { UserCheck, UserX, Users } from "lucide-react";
+import { UserCheck, UserX, Users, ToggleLeft, ToggleRight, Trash2 } from "lucide-react";
 import { api } from '../../shared/utils/api';
 
 const AttendancePage = () => {
@@ -256,24 +256,28 @@ const AttendancePage = () => {
                   <tr key={participant._id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-gray-800">{participant.staffId?.staffName || 'N/A'}</td>
                     <td className="px-4 py-3 text-gray-600">{participant.staffId?.emailAddress || 'N/A'}</td>
-                    <td className="px-4 py-3 text-gray-600">{participant.role || 'N/A'}</td>
+                    <td className="px-4 py-3 text-gray-600">{participant.staffId?.role || participant.role || 'N/A'}</td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 rounded text-xs font-semibold ${getStatusClass(participant.isPresent)}`}>
                         {getStatusText(participant.isPresent)}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-2">
-                        <button 
+                      <div className="flex items-center gap-2">
+                        <button
                           onClick={() => handleToggleAttendance(participant._id)}
-                          className="text-blue-600 hover:text-blue-800 text-sm"
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm border transition ${participant.isPresent ? 'border-green-600 text-green-700 hover:bg-green-50' : 'border-blue-600 text-blue-700 hover:bg-blue-50'}`}
+                          title="Toggle attendance"
                         >
-                          Toggle
+                          {participant.isPresent ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+                          {participant.isPresent ? 'Present' : 'Absent'}
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleRemoveMember(participant._id)}
-                          className="text-red-600 hover:text-red-800 text-sm"
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm border border-red-600 text-red-700 hover:bg-red-50 transition"
+                          title="Remove from meeting"
                         >
+                          <Trash2 size={16} />
                           Remove
                         </button>
                       </div>
@@ -375,6 +379,7 @@ const AttendancePage = () => {
                   <div>
                     <div className="font-medium text-gray-800">{participant.staffId?.staffName || 'N/A'}</div>
                     <div className="text-sm text-gray-500">{participant.staffId?.emailAddress || 'N/A'}</div>
+                    <div className="text-xs text-gray-400">Role: {participant.staffId?.role || participant.role || 'N/A'}</div>
                   </div>
                   <button
                     onClick={() => handleToggleAttendance(participant._id)}

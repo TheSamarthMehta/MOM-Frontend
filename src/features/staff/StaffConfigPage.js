@@ -222,6 +222,9 @@ const StaffConfigPage = () => {
             onChange={(e) => form.handleChange('mobileNo', e.target.value)}
             onBlur={() => form.handleBlur('mobileNo')}
             placeholder="Enter mobile number"
+            maxLength={10}
+            pattern="\d{10}"
+            inputMode="numeric"
             required
             error={form.touched.mobileNo && form.errors.mobileNo}
           />

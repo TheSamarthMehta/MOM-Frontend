@@ -9,8 +9,11 @@ export class DocumentService {
     for (const meeting of meetings) {
       try {
         const docsResponse = await api.get(`/meetings/${meeting._id}/documents`);
-        const meetingDocs = (docsResponse.data || []).map(doc => ({
+        const docsArray = Array.isArray(docsResponse) ? docsResponse : (docsResponse?.data || []);
+        const meetingDocs = docsArray.map(doc => ({
           ...doc,
+          uploadedByName: doc.uploadedBy?.staffName || doc.uploadedBy?.name || doc.uploadedBy || 'N/A',
+          createdAt: doc.created || doc.createdAt,
           meetingTitle: meeting.meetingTitle || 'Unknown Meeting',
           meetingId: meeting._id
         }));
@@ -86,10 +89,16 @@ export class DocumentService {
       };
       
       const response = await api.post(`/meetings/${uploadMeeting}/documents`, documentData);
-      await apiService.uploadFile(response.data._id, selectedFile);
-      
+      const createdDoc = response?.data || response; // handle both shapes
+      const docId = createdDoc?.data?._id || createdDoc?._id;
+      if (docId) {
+        await apiService.uploadFile(docId, selectedFile);
+      }
+      const rawDoc = createdDoc?.data || createdDoc;
       const newDoc = {
-        ...response.data,
+        ...rawDoc,
+        uploadedByName: rawDoc?.uploadedBy?.staffName || rawDoc?.uploadedBy?.name || rawDoc?.uploadedBy || 'N/A',
+        createdAt: rawDoc?.created || rawDoc?.createdAt,
         meetingTitle: meetings.find(m => m._id === uploadMeeting)?.meetingTitle || 'Unknown Meeting',
         meetingId: uploadMeeting
       };

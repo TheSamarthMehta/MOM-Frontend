@@ -10,12 +10,85 @@ const LoginPage = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [fieldErrors, setFieldErrors] = useState({});
+    const [touched, setTouched] = useState({});
     const { setUser, setToken } = useAuth();
     const navigate = useNavigate();
+    
+    const validateField = (name, value) => {
+        switch (name) {
+            case 'email':
+                if (!value.trim()) {
+                    return 'Please fill the email field';
+                }
+                if (!/\S+@\S+\.\S+/.test(value)) {
+                    return 'Please enter a valid email address';
+                }
+                return '';
+            case 'password':
+                if (!value.trim()) {
+                    return 'Please fill the password field';
+                }
+                if (value.length < 6) {
+                    return 'Password must be at least 6 characters';
+                }
+                return '';
+            case 'role':
+                if (!value) {
+                    return 'Please select a role';
+                }
+                return '';
+            default:
+                return '';
+        }
+    };
+
+    const handleBlur = (field) => {
+        setTouched(prev => ({ ...prev, [field]: true }));
+        const error = validateField(field, eval(field));
+        setFieldErrors(prev => ({ ...prev, [field]: error }));
+    };
+
+    const handleFieldChange = (field, value) => {
+        switch (field) {
+            case 'email':
+                setEmail(value);
+                break;
+            case 'password':
+                setPassword(value);
+                break;
+            case 'role':
+                setRole(value);
+                break;
+        }
+        
+        if (touched[field]) {
+            const error = validateField(field, value);
+            setFieldErrors(prev => ({ ...prev, [field]: error }));
+        }
+    };
     
     const handleLogin = async (e) => {
         e.preventDefault();
         setError(null);
+        
+        // Mark all fields as touched
+        setTouched({ email: true, password: true, role: true });
+        
+        // Validate all fields
+        const errors = {
+            email: validateField('email', email),
+            password: validateField('password', password),
+            role: validateField('role', role)
+        };
+        
+        setFieldErrors(errors);
+        
+        // Check if there are any errors
+        if (Object.values(errors).some(error => error !== '')) {
+            return;
+        }
+        
         setLoading(true);
 
         try {
@@ -69,7 +142,7 @@ const LoginPage = () => {
                         {/* Email Field */}
                         <div>
                             <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                                Email Address
+                                Email Address <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
                                 <input
@@ -77,9 +150,13 @@ const LoginPage = () => {
                                     type="email"
                                     placeholder="Enter your email"
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                                    onChange={(e) => handleFieldChange('email', e.target.value)}
+                                    onBlur={() => handleBlur('email')}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-gray-50 focus:bg-white ${
+                                        touched.email && fieldErrors.email 
+                                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                            : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
+                                    }`}
                                 />
                                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                                     <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,12 +164,20 @@ const LoginPage = () => {
                                     </svg>
                                 </div>
                             </div>
+                            {touched.email && fieldErrors.email && (
+                                <div className="mt-2 bg-red-50 border border-red-300 rounded-lg p-2 flex items-start space-x-2">
+                                    <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-sm text-red-700">{fieldErrors.email}</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Password Field */}
                         <div>
                             <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
-                                Password
+                                Password <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
                                 <input
@@ -100,9 +185,13 @@ const LoginPage = () => {
                                     type={showPassword ? "text" : "password"}
                                     placeholder="Enter your password"
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white pr-12"
+                                    onChange={(e) => handleFieldChange('password', e.target.value)}
+                                    onBlur={() => handleBlur('password')}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-gray-50 focus:bg-white pr-12 ${
+                                        touched.password && fieldErrors.password 
+                                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                            : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
+                                    }`}
                                 />
                                 <button
                                     type="button"
@@ -121,24 +210,44 @@ const LoginPage = () => {
                                     )}
                                 </button>
                             </div>
+                            {touched.password && fieldErrors.password && (
+                                <div className="mt-2 bg-red-50 border border-red-300 rounded-lg p-2 flex items-start space-x-2">
+                                    <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-sm text-red-700">{fieldErrors.password}</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Role Field */}
                         <div>
                             <label htmlFor="role" className="block text-sm font-semibold text-gray-700 mb-2">
-                                Role
+                                Role <span className="text-red-500">*</span>
                             </label>
                             <select
                                 id="role"
                                 value={role}
-                                onChange={(e) => setRole(e.target.value)}
-                                required
-                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                                onChange={(e) => handleFieldChange('role', e.target.value)}
+                                onBlur={() => handleBlur('role')}
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-gray-50 focus:bg-white ${
+                                    touched.role && fieldErrors.role 
+                                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                        : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
+                                }`}
                             >
                                 <option value="Admin">Admin</option>
                                 <option value="Convener">Convener</option>
                                 <option value="Staff">Staff</option>
                             </select>
+                            {touched.role && fieldErrors.role && (
+                                <div className="mt-2 bg-red-50 border border-red-300 rounded-lg p-2 flex items-start space-x-2">
+                                    <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-sm text-red-700">{fieldErrors.role}</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Login Button */}

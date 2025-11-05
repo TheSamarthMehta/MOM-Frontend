@@ -1,83 +1,36 @@
-import React, { useState, useEffect } from "react";
-import { Upload, Search } from "lucide-react";
-import { api } from '../../shared/utils/api';
+import React, { useState } from "react";
+import { Search } from "lucide-react";
 import DocumentService from '../../api/documentService';
 import LoadingSpinner from '../../shared/components/LoadingSpinner';
 import ErrorMessage from '../../shared/components/ErrorMessage';
 import Modal from '../../shared/components/Modal';
 import PageHeader from '../../shared/components/PageHeader';
 import DataTable from '../../shared/components/DataTable';
-import { FormInput, FormSelect, FormButton } from '../../shared/components/FormComponents';
+import { FormSelect, FormButton } from '../../shared/components/FormComponents';
 import { formatFileSize, getFileType, getFileIcon, FileUpload, FileActions } from '../../shared/components/FileComponents';
 import { ActionIcons } from '../../shared/components/ActionIcons';
+import { useDocumentsManager } from './DocumentsManagerHandler';
 
 const DocumentsManagerPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("All");
-  const [documents, setDocuments] = useState([]);
-  const [meetings, setMeetings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [uploadMeeting, setUploadMeeting] = useState("");
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const meetingsResponse = await api.get('/meetings?limit=50');
-      setMeetings(meetingsResponse.data || []);
-      
-      const allDocuments = await DocumentService.fetchAllDocuments(meetingsResponse.data || []);
-      setDocuments(allDocuments);
-    } catch (err) {
-      setError(err.message || 'Failed to load data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-  const handleDelete = async (doc) => {
-    const success = await DocumentService.deleteDocument(doc);
-    if (success) {
-      setDocuments((prev) => prev.filter((d) => d._id !== doc._id));
-    }
-  };
-
-  const handleView = async (doc) => {
-    await DocumentService.viewDocument(doc);
-  };
-
-  const handleDownload = async (doc) => {
-    await DocumentService.downloadDocument(doc);
-  };
-
-
-  const handleUpload = async (e) => {
-    e.preventDefault();
-    
-    try {
-      setLoading(true);
-      const newDoc = await DocumentService.uploadDocument(selectedFile, uploadMeeting, meetings);
-      
-      if (newDoc) {
-        setDocuments((prev) => [newDoc, ...prev]);
-        setSelectedFile(null);
-        setUploadMeeting("");
-        setShowUploadModal(false);
-      }
-    } catch (err) {
-    } finally {
-      setLoading(false);
-    }
-  };
+  
+  const {
+    documents,
+    meetings,
+    loading,
+    error,
+    selectedFile,
+    uploadMeeting,
+    showUploadModal,
+    setSelectedFile,
+    setUploadMeeting,
+    setShowUploadModal,
+    handleDelete,
+    handleView,
+    handleDownload,
+    handleUpload
+  } = useDocumentsManager();
 
   const filteredDocs = DocumentService.filterDocuments(documents, searchQuery, filterType);
 
@@ -111,11 +64,6 @@ const DocumentsManagerPage = () => {
       )
     },
     {
-      key: 'documentType',
-      header: 'Type',
-      render: (value) => <span className="text-gray-600">{value || 'N/A'}</span>
-    },
-    {
       key: 'fileSize',
       header: 'Size',
       render: (value) => <span className="text-gray-600">{value ? formatFileSize(value) : 'N/A'}</span>
@@ -126,14 +74,12 @@ const DocumentsManagerPage = () => {
       render: (value) => <span className="text-gray-600">{value || 'N/A'}</span>
     },
     {
-      key: 'uploadedBy',
-      header: 'Uploaded By',
-      render: (value) => <span className="text-gray-600">{value || 'N/A'}</span>
-    },
-    {
       key: 'createdAt',
       header: 'Date',
-      render: (value) => <span className="text-gray-600">{value ? new Date(value).toLocaleDateString() : 'N/A'}</span>
+      render: (value, doc) => {
+        const dateValue = value || doc.created;
+        return <span className="text-gray-600">{dateValue ? new Date(dateValue).toLocaleDateString() : 'N/A'}</span>;
+      }
     },
     {
       key: 'actions',

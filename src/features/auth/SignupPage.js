@@ -15,35 +15,157 @@ const SignupPage = () => {
     const [passwordError, setPasswordError] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [fieldErrors, setFieldErrors] = useState({});
+    const [touched, setTouched] = useState({});
     const { setUser, setToken } = useAuth();
     const navigate = useNavigate();
 
-
-
-    const handleMobileChange = (e) => {
-        const value = e.target.value;
-        if (/^\d*$/.test(value) && value.length <= 10) {
-            setMobileNo(value);
+    const validateField = (name, value) => {
+        switch (name) {
+            case 'firstName':
+                if (!value.trim()) {
+                    return 'Please fill the first name field';
+                }
+                return '';
+            case 'lastName':
+                if (!value.trim()) {
+                    return 'Please fill the last name field';
+                }
+                return '';
+            case 'email':
+                if (!value.trim()) {
+                    return 'Please fill the email field';
+                }
+                if (!/\S+@\S+\.\S+/.test(value)) {
+                    return 'Please enter a valid email address';
+                }
+                return '';
+            case 'mobileNo':
+                if (!value.trim()) {
+                    return 'Please fill the mobile number field';
+                }
+                if (value.length !== 10) {
+                    return 'Mobile number must be 10 digits';
+                }
+                return '';
+            case 'password':
+                if (!value.trim()) {
+                    return 'Please fill the password field';
+                }
+                if (value.length < 6) {
+                    return 'Password must be at least 6 characters';
+                }
+                return '';
+            case 'confirmPassword':
+                if (!value.trim()) {
+                    return 'Please fill the confirm password field';
+                }
+                if (value !== password) {
+                    return 'Passwords do not match';
+                }
+                return '';
+            case 'role':
+                if (!value) {
+                    return 'Please select a role';
+                }
+                return '';
+            default:
+                return '';
         }
     };
+
+    const handleBlur = (field) => {
+        setTouched(prev => ({ ...prev, [field]: true }));
+        let value;
+        switch (field) {
+            case 'firstName': value = firstName; break;
+            case 'lastName': value = lastName; break;
+            case 'email': value = email; break;
+            case 'mobileNo': value = mobileNo; break;
+            case 'password': value = password; break;
+            case 'confirmPassword': value = confirmPassword; break;
+            case 'role': value = role; break;
+            default: value = '';
+        }
+        const error = validateField(field, value);
+        setFieldErrors(prev => ({ ...prev, [field]: error }));
+    };
+
+    const handleFieldChange = (field, value) => {
+        switch (field) {
+            case 'firstName':
+                setFirstName(value);
+                break;
+            case 'lastName':
+                setLastName(value);
+                break;
+            case 'email':
+                setEmail(value);
+                break;
+            case 'mobileNo':
+                if (/^\d*$/.test(value) && value.length <= 10) {
+                    setMobileNo(value);
+                }
+                break;
+            case 'password':
+                setPassword(value);
+                // Also revalidate confirm password if it's been touched
+                if (touched.confirmPassword) {
+                    const confirmError = validateField('confirmPassword', confirmPassword);
+                    setFieldErrors(prev => ({ ...prev, confirmPassword: confirmError }));
+                }
+                break;
+            case 'confirmPassword':
+                setConfirmPassword(value);
+                break;
+            case 'role':
+                setRole(value);
+                break;
+        }
+        
+        if (touched[field]) {
+            const error = validateField(field, value);
+            setFieldErrors(prev => ({ ...prev, [field]: error }));
+        }
+    };
+
+
 
     const handleSignup = async (e) => {
         e.preventDefault();
         setError(null);
         setPasswordError('');
+        
+        // Mark all fields as touched
+        setTouched({
+            firstName: true,
+            lastName: true,
+            email: true,
+            mobileNo: true,
+            password: true,
+            confirmPassword: true,
+            role: true
+        });
+        
+        // Validate all fields
+        const errors = {
+            firstName: validateField('firstName', firstName),
+            lastName: validateField('lastName', lastName),
+            email: validateField('email', email),
+            mobileNo: validateField('mobileNo', mobileNo),
+            password: validateField('password', password),
+            confirmPassword: validateField('confirmPassword', confirmPassword),
+            role: validateField('role', role)
+        };
+        
+        setFieldErrors(errors);
+        
+        // Check if there are any errors
+        if (Object.values(errors).some(error => error !== '')) {
+            return;
+        }
+        
         setLoading(true);
-
-        if (password !== confirmPassword) {
-            setPasswordError("Passwords do not match!");
-            setLoading(false);
-            return;
-        }
-
-        if (password.length < 6) {
-            setPasswordError("Password must be at least 6 characters long!");
-            setLoading(false);
-            return;
-        }
 
         try {
             const userData = {
@@ -120,38 +242,62 @@ const SignupPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="firstName" className="block text-sm font-semibold text-gray-700 mb-2">
-                                    First Name
+                                    First Name <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     id="firstName"
                                     type="text"
                                     placeholder="Enter first name"
                                     value={firstName}
-                                    onChange={(e) => setFirstName(e.target.value)}
-                                    required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                                    onChange={(e) => handleFieldChange('firstName', e.target.value)}
+                                    onBlur={() => handleBlur('firstName')}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-gray-50 focus:bg-white ${
+                                        touched.firstName && fieldErrors.firstName 
+                                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                            : 'border-gray-300 focus:ring-green-500 focus:border-transparent'
+                                    }`}
                                 />
+                                {touched.firstName && fieldErrors.firstName && (
+                                    <div className="mt-2 bg-red-50 border border-red-300 rounded-lg p-2 flex items-start space-x-2">
+                                        <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <p className="text-sm text-red-700">{fieldErrors.firstName}</p>
+                                    </div>
+                                )}
                             </div>
                             <div>
                                 <label htmlFor="lastName" className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Last Name
+                                    Last Name <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     id="lastName"
                                     type="text"
                                     placeholder="Enter last name"
                                     value={lastName}
-                                    onChange={(e) => setLastName(e.target.value)}
-                                    required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                                    onChange={(e) => handleFieldChange('lastName', e.target.value)}
+                                    onBlur={() => handleBlur('lastName')}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-gray-50 focus:bg-white ${
+                                        touched.lastName && fieldErrors.lastName 
+                                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                            : 'border-gray-300 focus:ring-green-500 focus:border-transparent'
+                                    }`}
                                 />
+                                {touched.lastName && fieldErrors.lastName && (
+                                    <div className="mt-2 bg-red-50 border border-red-300 rounded-lg p-2 flex items-start space-x-2">
+                                        <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <p className="text-sm text-red-700">{fieldErrors.lastName}</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
                         {/* Email Field */}
                         <div>
                             <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                                Email Address
+                                Email Address <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
                                 <input
@@ -159,9 +305,13 @@ const SignupPage = () => {
                                     type="email"
                                     placeholder="Enter your email"
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                                    onChange={(e) => handleFieldChange('email', e.target.value)}
+                                    onBlur={() => handleBlur('email')}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-gray-50 focus:bg-white ${
+                                        touched.email && fieldErrors.email 
+                                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                            : 'border-gray-300 focus:ring-green-500 focus:border-transparent'
+                                    }`}
                                 />
                                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                                     <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,12 +319,20 @@ const SignupPage = () => {
                                     </svg>
                                 </div>
                             </div>
+                            {touched.email && fieldErrors.email && (
+                                <div className="mt-2 bg-red-50 border border-red-300 rounded-lg p-2 flex items-start space-x-2">
+                                    <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-sm text-red-700">{fieldErrors.email}</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Mobile Field */}
                         <div>
                             <label htmlFor="mobile" className="block text-sm font-semibold text-gray-700 mb-2">
-                                Mobile Number
+                                Mobile Number <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
                                 <input
@@ -182,9 +340,13 @@ const SignupPage = () => {
                                     type="tel"
                                     placeholder="Enter 10-digit mobile number"
                                     value={mobileNo}
-                                    onChange={handleMobileChange}
-                                    required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                                    onChange={(e) => handleFieldChange('mobileNo', e.target.value)}
+                                    onBlur={() => handleBlur('mobileNo')}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-gray-50 focus:bg-white ${
+                                        touched.mobileNo && fieldErrors.mobileNo 
+                                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                            : 'border-gray-300 focus:ring-green-500 focus:border-transparent'
+                                    }`}
                                 />
                                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                                     <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -192,13 +354,21 @@ const SignupPage = () => {
                                     </svg>
                                 </div>
                             </div>
+                            {touched.mobileNo && fieldErrors.mobileNo && (
+                                <div className="mt-2 bg-red-50 border border-red-300 rounded-lg p-2 flex items-start space-x-2">
+                                    <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-sm text-red-700">{fieldErrors.mobileNo}</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Password Fields */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Password
+                                    Password <span className="text-red-500">*</span>
                                 </label>
                                 <div className="relative">
                                     <input
@@ -206,9 +376,13 @@ const SignupPage = () => {
                                         type={showPassword ? "text" : "password"}
                                         placeholder="Create password"
                                         value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        required
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white pr-12"
+                                        onChange={(e) => handleFieldChange('password', e.target.value)}
+                                        onBlur={() => handleBlur('password')}
+                                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-gray-50 focus:bg-white pr-12 ${
+                                            touched.password && fieldErrors.password 
+                                                ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                                : 'border-gray-300 focus:ring-green-500 focus:border-transparent'
+                                        }`}
                                     />
                                     <button
                                         type="button"
@@ -227,39 +401,71 @@ const SignupPage = () => {
                                         )}
                                     </button>
                                 </div>
+                                {touched.password && fieldErrors.password && (
+                                    <div className="mt-2 bg-red-50 border border-red-300 rounded-lg p-2 flex items-start space-x-2">
+                                        <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <p className="text-sm text-red-700">{fieldErrors.password}</p>
+                                    </div>
+                                )}
                             </div>
                             <div>
                                 <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Confirm Password
+                                    Confirm Password <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     id="confirmPassword"
                                     type="password"
                                     placeholder="Confirm password"
                                     value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                                    onChange={(e) => handleFieldChange('confirmPassword', e.target.value)}
+                                    onBlur={() => handleBlur('confirmPassword')}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-gray-50 focus:bg-white ${
+                                        touched.confirmPassword && fieldErrors.confirmPassword 
+                                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                            : 'border-gray-300 focus:ring-green-500 focus:border-transparent'
+                                    }`}
                                 />
+                                {touched.confirmPassword && fieldErrors.confirmPassword && (
+                                    <div className="mt-2 bg-red-50 border border-red-300 rounded-lg p-2 flex items-start space-x-2">
+                                        <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <p className="text-sm text-red-700">{fieldErrors.confirmPassword}</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
                         {/* Role Field */}
                         <div>
                             <label htmlFor="role" className="block text-sm font-semibold text-gray-700 mb-2">
-                                Role
+                                Role <span className="text-red-500">*</span>
                             </label>
                             <select
                                 id="role"
                                 value={role}
-                                onChange={(e) => setRole(e.target.value)}
-                                required
-                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                                onChange={(e) => handleFieldChange('role', e.target.value)}
+                                onBlur={() => handleBlur('role')}
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-gray-50 focus:bg-white ${
+                                    touched.role && fieldErrors.role 
+                                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                        : 'border-gray-300 focus:ring-green-500 focus:border-transparent'
+                                }`}
                             >
                                 <option value="Admin">Admin</option>
                                 <option value="Convener">Convener</option>
                                 <option value="Staff">Staff</option>
                             </select>
+                            {touched.role && fieldErrors.role && (
+                                <div className="mt-2 bg-red-50 border border-red-300 rounded-lg p-2 flex items-start space-x-2">
+                                    <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-sm text-red-700">{fieldErrors.role}</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Submit Button */}

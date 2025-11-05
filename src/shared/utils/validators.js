@@ -118,7 +118,7 @@ export const schemas = {
     ),
     mobileNo: combine(
       validators.required('Mobile number is required'),
-      validators.phone('Please enter a valid phone number')
+      validators.pattern(/^\d{10}$/, 'Mobile number must be 10 digits')
     ),
     role: validators.required('Role is required'),
   },

@@ -84,6 +84,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+        
       </Route>
     </Routes>
   );
